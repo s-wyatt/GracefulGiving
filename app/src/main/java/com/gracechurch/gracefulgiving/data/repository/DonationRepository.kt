@@ -2,7 +2,7 @@ package com.gracechurch.gracefulgiving.data.repository
 
 import com.gracechurch.gracefulgiving.data.local.dao.DonationDao
 import com.gracechurch.gracefulgiving.data.local.entity.DonationEntity
-import com.gracechurch.gracefulgiving.domain.model.DonationWithDonor
+import com.gracechurch.gracefulgiving.data.local.relations.DonationWithDonor
 import java.util.*
 
 class DonationRepository(private val donationDao: DonationDao) {

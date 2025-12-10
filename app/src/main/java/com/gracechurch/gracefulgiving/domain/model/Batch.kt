@@ -10,6 +10,6 @@ data class Batch(
     val batchNumber: String,
     val batchDate: Long,
     val createdBy: Long,
-    val createdAt: Long = System.currentTimeMillis(),
+    val createdOn: Long = System.currentTimeMillis(),
     val status: String = "open"
 )

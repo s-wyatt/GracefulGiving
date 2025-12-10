@@ -1,7 +1,7 @@
 package com.gracechurch.gracefulgiving.domain.model
 
 data class Donor(
-    val id: Long = 0,
+    val donorId: Long = 0,
     val firstName: String,
     val lastName: String,
     val optOutStatement: Boolean = false,

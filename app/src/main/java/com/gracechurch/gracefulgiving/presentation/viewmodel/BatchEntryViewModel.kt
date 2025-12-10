@@ -1,7 +1,8 @@
-package com.gracechurch.gracefulgiving.presentation.screens.detail
-import BatchWithDonations
+package com.gracechurch.gracefulgiving.presentation.viewmodel
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.gracechurch.gracefulgiving.data.local.relations.BatchWithDonations
 import com.gracechurch.gracefulgiving.data.repository.*
 import com.gracechurch.gracefulgiving.domain.model.*
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,8 +20,10 @@ class BatchEntryViewModel @Inject constructor(
 
     fun createBatch(batchDate: Long, userId: Long) {
         viewModelScope.launch {
-            val batch: BatchWithDonations? = batchRepo.createBatch(batchDate, userId)
+            val batch = batchRepo.createBatch(batchDate, userId)
             _uiState.update { it.copy(currentBatch = batch) }
+            // Load the batch with donations after creation
+            loadBatch(batch.id)
         }
     }
 
@@ -28,7 +31,14 @@ class BatchEntryViewModel @Inject constructor(
         viewModelScope.launch {
             val donor = donorRepo.findOrCreateDonor(firstName, lastName)
             val batch = _uiState.value.currentBatch ?: return@launch
-            val donation = Donation(donorId = donor.id, donorName = donor.fullName, batchId = batch.id, checkNumber = checkNumber, checkDate = checkDate, amount = amount)
+            val donation = Donation(
+                donorId = donor.id,
+                donorName = donor.fullName,
+                batchId = batch.id,
+                checkNumber = checkNumber,
+                checkDate = checkDate,
+                amount = amount
+            )
             batchRepo.addDonation(donation, imageData)
             loadBatch(batch.id)
         }
@@ -36,14 +46,23 @@ class BatchEntryViewModel @Inject constructor(
 
     fun loadBatch(batchId: Long) {
         viewModelScope.launch {
-            batchRepo.getBatchWithDonations(batchId).collect { batch ->
-                _uiState.update { it.copy(currentBatch = batch) }
+            batchRepo.getBatchWithDonations(batchId).collect { batchWithDonations ->
+                _uiState.update { it.copy(batchWithDonations = batchWithDonations) }
             }
         }
     }
 
-    fun setScannedData(data: ScannedCheckData) { _uiState.update { it.copy(scannedData = data) } }
-    fun clearScannedData() { _uiState.update { it.copy(scannedData = null) } }
+    fun setScannedData(data: ScannedCheckData) {
+        _uiState.update { it.copy(scannedData = data) }
+    }
+
+    fun clearScannedData() {
+        _uiState.update { it.copy(scannedData = null) }
+    }
 }
 
-data class BatchEntryUiState(val currentBatch: BatchWithDonations? = null, val scannedData: ScannedCheckData? = null)
+data class BatchEntryUiState(
+    val currentBatch: Batch? = null,
+    val batchWithDonations: BatchWithDonations? = null,
+    val scannedData: ScannedCheckData? = null
+)

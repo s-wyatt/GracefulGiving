@@ -1,13 +1,13 @@
 package com.gracechurch.gracefulgiving.data.local.dao
 import androidx.room.*
 import com.gracechurch.gracefulgiving.data.local.entity.DonationEntity
-import com.gracechurch.gracefulgiving.domain.model.DonationWithDonor
+import com.gracechurch.gracefulgiving.data.local.relations.DonationWithDonor
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface DonationDao {
     @Transaction // <-- @Transaction is crucial for relationship queries
-    @Query("SELECT * FROM donations WHERE id = :donationId")
+    @Query("SELECT * FROM donations WHERE donationId = :donationId")
     suspend fun getDonationWithDonor(donationId: Long): DonationWithDonor?
 
     @Query("SELECT * FROM donations WHERE batchId = :batchId")

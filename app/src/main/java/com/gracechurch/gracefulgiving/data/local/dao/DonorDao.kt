@@ -10,8 +10,8 @@ import com.gracechurch.gracefulgiving.data.local.entity.DonorEntity
 
 @Dao
 interface DonorDao {
-    @Query("SELECT * FROM donors WHERE id = :id")
-    suspend fun getDonorById(id: Long): DonorEntity?
+    @Query("SELECT * FROM donors WHERE donorId = :donorId")
+    suspend fun getDonorById(donorId: Long): DonorEntity?
 
     @Query("SELECT * FROM donors WHERE firstName LIKE :query OR lastName LIKE :query ORDER BY lastName, firstName")
     suspend fun searchDonors(query: String): List<DonorEntity>
@@ -22,8 +22,8 @@ interface DonorDao {
     @Query("SELECT * FROM donors ORDER BY lastName, firstName")
     suspend fun getAllDonors(): List<DonorEntity>
 
-    @Query("SELECT * FROM donors WHERE optOutStatement = 0 ORDER BY lastName, firstName")
-    suspend fun getDonorsOptedIn(): List<DonorEntity>
+//    @Query("SELECT * FROM donors WHERE optOutStatement = 0 ORDER BY lastName, firstName")
+//    suspend fun getDonorsOptedIn(): List<DonorEntity>
 
     @Insert
     suspend fun insertDonor(donor: DonorEntity): Long

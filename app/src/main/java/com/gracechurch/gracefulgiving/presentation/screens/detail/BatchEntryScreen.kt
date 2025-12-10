@@ -4,30 +4,38 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import java.util.*
+import com.gracechurch.gracefulgiving.domain.model.ScannedCheckData
+import com.gracechurch.gracefulgiving.presentation.viewmodel.BatchEntryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BatchEntryScreen(vm: BatchEntryViewModel = hiltViewModel(), userId: Long) {
+
     val state by vm.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var showScanner by remember { mutableStateOf(false) }
 
+    // Create batch once
     LaunchedEffect(Unit) {
         if (state.currentBatch == null) {
             vm.createBatch(System.currentTimeMillis(), userId)
         }
     }
 
-    val batchNumberText = state.currentBatch?.batch?.batchNumber ?: ""
-    val donationsCount = state.currentBatch?.donations?.size ?: 0
-    val totalAmount = state.currentBatch?.donations?.sumOf { it.checkAmount } ?: 0.0
+    // Current batch references
+    val batch = state.currentBatch
+    val batchWithDonations = state.batchWithDonations
+    val batchNumberText = batch?.batchNumber?.toString() ?: ""
+    val donations = batchWithDonations?.donations ?: emptyList()
+    val donationsCount = donations.size
+    val totalAmount = donations.sumOf { it.donation.checkAmount }
     val totalAmountText = "$${"%.2f".format(totalAmount)}"
 
     Scaffold(
@@ -39,11 +47,11 @@ fun BatchEntryScreen(vm: BatchEntryViewModel = hiltViewModel(), userId: Long) {
         }
     ) { pad ->
         Column(Modifier.fillMaxSize().padding(pad)) {
+
+            // Summary Card
             Card(Modifier.fillMaxWidth().padding(16.dp)) {
                 Row(
-                    Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth(),
+                    Modifier.padding(16.dp).fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
                     Column {
@@ -57,6 +65,7 @@ fun BatchEntryScreen(vm: BatchEntryViewModel = hiltViewModel(), userId: Long) {
                 }
             }
 
+            // Scan Check Button
             Button(
                 onClick = { showScanner = true },
                 Modifier.fillMaxWidth().padding(horizontal = 16.dp)
@@ -66,12 +75,19 @@ fun BatchEntryScreen(vm: BatchEntryViewModel = hiltViewModel(), userId: Long) {
                 Text("Scan Check")
             }
 
+            // Donations List
             LazyColumn(Modifier.fillMaxSize().padding(16.dp)) {
-                items(state.currentBatch?.donations ?: emptyList()) { donation ->
+                items(donations) { donationWithDonor ->
+
+                    val donorName =
+                        "${donationWithDonor.donor.firstName} ${donationWithDonor.donor.lastName}"
+
+                    val donationText =
+                        "Check #${donationWithDonor.donation.checkNumber} - $${"%.2f".format(donationWithDonor.donation.checkAmount)}"
+
                     Card(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                         Column(Modifier.padding(16.dp)) {
-                            Text(donation.donorName, style = MaterialTheme.typography.titleMedium)
-                            val donationText = "Check #${donation.checkNumber} - $${"%.2f".format(donation.checkAmount)}"
+                            Text(donorName, style = MaterialTheme.typography.titleMedium)
                             Text(donationText)
                         }
                     }
@@ -80,10 +96,11 @@ fun BatchEntryScreen(vm: BatchEntryViewModel = hiltViewModel(), userId: Long) {
         }
     }
 
+    // Donation entry dialog
     if (showDialog) {
         DonationEntryDialog(
             scannedData = state.scannedData,
-            batchDate = state.currentBatch?.batch?.batchDate ?: System.currentTimeMillis(),
+            batchDate = state.currentBatch?.createdOn ?: System.currentTimeMillis(),
             onDismiss = {
                 showDialog = false
                 vm.clearScannedData()
@@ -96,6 +113,7 @@ fun BatchEntryScreen(vm: BatchEntryViewModel = hiltViewModel(), userId: Long) {
         )
     }
 
+    // Check scanner UI
     if (showScanner) {
         CheckScannerScreen(
             onDismiss = { showScanner = false },
@@ -125,33 +143,13 @@ fun DonationEntryDialog(
         title = { Text("Add Donation") },
         text = {
             Column {
-                OutlinedTextField(
-                    value = firstName,
-                    onValueChange = { firstName = it },
-                    label = { Text("First Name") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                OutlinedTextField(firstName, { firstName = it }, label = { Text("First Name") })
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = lastName,
-                    onValueChange = { lastName = it },
-                    label = { Text("Last Name") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                OutlinedTextField(lastName, { lastName = it }, label = { Text("Last Name") })
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = checkNumber,
-                    onValueChange = { checkNumber = it },
-                    label = { Text("Check Number") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                OutlinedTextField(checkNumber, { checkNumber = it }, label = { Text("Check Number") })
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = amount,
-                    onValueChange = { amount = it },
-                    label = { Text("Amount") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                OutlinedTextField(amount, { amount = it }, label = { Text("Amount") })
             }
         },
         confirmButton = {
@@ -159,14 +157,8 @@ fun DonationEntryDialog(
                 amount.toDoubleOrNull()?.let { amt ->
                     onSave(firstName, lastName, checkNumber, amt, batchDate, scannedData?.imageData)
                 }
-            }) {
-                Text("Save")
-            }
+            }) { Text("Save") }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
 }

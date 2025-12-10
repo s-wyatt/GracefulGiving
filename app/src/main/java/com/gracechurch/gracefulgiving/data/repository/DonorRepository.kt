@@ -28,8 +28,8 @@ class DonorRepository @Inject constructor(
 
             val donorEntity = DonorEntity(
                 firstName = firstName,
-                lastName = lastName,
-                optOutStatement = optOutStatement
+                lastName = lastName
+//                ,optOutStatement = optOutStatement
             )
             val newId = donorDao.insertDonor(donorEntity)
             Result.success(newId)
@@ -102,7 +102,7 @@ class DonorRepository @Inject constructor(
      */
     private fun mapEntityToDomain(donorEntity: DonorEntity): Donor {
         return Donor(
-            id = donorEntity.id,
+            donorId = donorEntity.donorId,
             firstName = donorEntity.firstName,
             lastName = donorEntity.lastName,
             optOutStatement = donorEntity.optOutStatement,
@@ -115,7 +115,7 @@ class DonorRepository @Inject constructor(
      */
     private fun mapDomainToEntity(donor: Donor): DonorEntity {
         return DonorEntity(
-            id = donor.id,
+            donorId = donor.donorId,
             firstName = donor.firstName,
             lastName = donor.lastName,
             optOutStatement = donor.optOutStatement,

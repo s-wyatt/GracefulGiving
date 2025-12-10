@@ -1,33 +1,15 @@
 package com.gracechurch.gracefulgiving.data.local.entity
 
 import androidx.room.Entity
-import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 
-@Entity(
-    tableName = "donations",
-    foreignKeys = [
-        ForeignKey(
-            entity = BatchEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["id"],
-            onDelete = ForeignKey.CASCADE
-        ),
-        ForeignKey(
-            entity = DonorEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["donorId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ]
-)
+@Entity(tableName = "donations")
 data class DonationEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val batchId: Long,
+    @PrimaryKey(autoGenerate = true) val donationId: Long = 0,
     val donorId: Long,
-    val checkDate: Long,
+    val batchId: Long,
     val checkNumber: String,
     val checkAmount: Double,
-    val createdAt: Long = System.currentTimeMillis()
+    val checkDate: Long,
+    val checkImage: String? = null
 )
