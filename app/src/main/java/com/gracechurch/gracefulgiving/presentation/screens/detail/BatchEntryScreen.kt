@@ -24,7 +24,7 @@ fun BatchEntryScreen(vm: BatchEntryViewModel = hiltViewModel(), userId: Long) {
 
     // Create batch once
     LaunchedEffect(Unit) {
-        if (state.currentBatch == null) {
+        if (state.batchWithDonations == null) {
             vm.createBatch(System.currentTimeMillis(), userId)
         }
     }

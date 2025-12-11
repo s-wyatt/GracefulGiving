@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.gracefulgiving.app"
+    namespace = "com.gracechurch.gracefulgiving.app"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.gracefulgiving.app"
+        applicationId = "com.gracechurch.gracefulgiving.app"
         minSdk = 24
         targetSdk = 35
         versionCode = 1
@@ -26,7 +26,14 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
+//    androidResources {
+//        noCompress += "tflite"
+//    }
     kotlinOptions {
         jvmTarget = "17"
     }
@@ -65,7 +72,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.6.0")
 
     // CameraX dependencies
-    val cameraxVersion = "1.3.1"
+    val cameraxVersion = "1.4.0"
     implementation("androidx.camera:camera-core:$cameraxVersion")
     implementation("androidx.camera:camera-camera2:$cameraxVersion")
     implementation("androidx.camera:camera-lifecycle:$cameraxVersion")

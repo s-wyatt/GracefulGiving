@@ -1,4 +1,5 @@
-package com.gracechurch.gracefulgiving
+package com.gracechurch.gracefulgiving.app
+
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent

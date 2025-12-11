@@ -1,4 +1,4 @@
-package com.gracechurch.gracefulgiving
+package com.gracechurch.gracefulgiving.app
 
 import android.app.Application
 import dagger.hilt.android.HiltAndroidApp
