@@ -6,8 +6,9 @@ import com.gracechurch.gracefulgiving.data.local.entity.DonationEntity
 import com.gracechurch.gracefulgiving.data.local.entity.DonorEntity
 import com.gracechurch.gracefulgiving.data.local.relations.BatchWithDonations
 import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
 
-class BatchRepository(private val dao: BatchDao) {
+class BatchRepository @Inject constructor(private val dao: BatchDao) {
 
     fun getBatch(id: Long): Flow<BatchWithDonations?> =
         dao.getBatchWithDonations(id)

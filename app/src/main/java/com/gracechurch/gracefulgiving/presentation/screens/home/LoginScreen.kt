@@ -7,15 +7,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.gracechurch.gracefulgiving.presentation.viewmodel.LoginViewModel
 
 @Composable
 fun LoginScreen(
-    vm: LoginViewModel = viewModel(),
-    onLoginSuccess: (Long) -> Unit  // Add this parameter
+    viewModel: LoginViewModel = hiltViewModel(),
+    onLoginSuccess: (Long) -> Unit = {}  // Changed from String to Long
 ) {
-    val state by vm.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsState()
 
     // Navigate when login is successful
     LaunchedEffect(state.isLoggedIn) {
@@ -39,7 +39,7 @@ fun LoginScreen(
 
         OutlinedTextField(
             value = state.username,
-            onValueChange = vm::onUsernameChanged,
+            onValueChange = viewModel::onUsernameChanged,
             label = { Text("Username") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
@@ -50,7 +50,7 @@ fun LoginScreen(
 
         OutlinedTextField(
             value = state.password,
-            onValueChange = vm::onPasswordChanged,
+            onValueChange = viewModel::onPasswordChanged,
             label = { Text("Password") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
@@ -70,7 +70,7 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
-            onClick = vm::login,
+            onClick = viewModel::login,
             modifier = Modifier.fillMaxWidth(),
             enabled = !state.isLoading && state.username.isNotBlank() && state.password.isNotBlank()
         ) {

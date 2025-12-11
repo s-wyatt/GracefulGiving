@@ -4,8 +4,9 @@ import com.gracechurch.gracefulgiving.data.local.dao.DonationDao
 import com.gracechurch.gracefulgiving.data.local.entity.DonationEntity
 import com.gracechurch.gracefulgiving.data.local.relations.DonationWithDonor
 import java.util.*
+import javax.inject.Inject
 
-class DonationRepository(private val donationDao: DonationDao) {
+class DonationRepository @Inject constructor(private val donationDao: DonationDao) {
 
     suspend fun createDonation(
         batchId: Long,
