@@ -30,9 +30,8 @@ fun BatchEntryScreen(vm: BatchEntryViewModel = hiltViewModel(), userId: Long) {
     }
 
     // Current batch references
-    val batch = state.currentBatch
     val batchWithDonations = state.batchWithDonations
-    val batchNumberText = batch?.batchNumber?.toString() ?: ""
+    val batchNumberText = batchWithDonations?.batch?.batchNumber?.toString() ?: ""
     val donations = batchWithDonations?.donations ?: emptyList()
     val donationsCount = donations.size
     val totalAmount = donations.sumOf { it.donation.checkAmount }
@@ -100,7 +99,7 @@ fun BatchEntryScreen(vm: BatchEntryViewModel = hiltViewModel(), userId: Long) {
     if (showDialog) {
         DonationEntryDialog(
             scannedData = state.scannedData,
-            batchDate = state.currentBatch?.createdOn ?: System.currentTimeMillis(),
+            batchDate = batchWithDonations?.batch?.createdOn ?: System.currentTimeMillis(),
             onDismiss = {
                 showDialog = false
                 vm.clearScannedData()
