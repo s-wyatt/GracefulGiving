@@ -17,7 +17,11 @@ android {
         versionCode = 1
         versionName = "1.0"
     }
-
+    buildTypes {
+        getByName("debug") {
+            isDebuggable = true
+        }
+    }
     buildFeatures {
         compose = true
     }
@@ -43,20 +47,20 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity.compose)
-
+// ML Kit Text Recognition
+    implementation("com.google.mlkit:text-recognition:16.0.1")
     // Navigation
     implementation(libs.androidx.navigation.compose)
 
     // Material3
     implementation(libs.compose.material3)
-    implementation(libs.androidx.foundation.layout)
+//    implementation(libs.androidx.foundation.layout)
 
     // Compose BOM
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.graphics)
     implementation(libs.compose.ui.tooling.preview)
-    implementation(libs.compose.material3)
     debugImplementation(libs.compose.ui.tooling)
 
     // Room – USE ONLY VERSION CATALOG

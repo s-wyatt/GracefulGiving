@@ -12,8 +12,22 @@ import javax.inject.Singleton
 class AuthRepository @Inject constructor(private val userDao: UserDao) {
     suspend fun login(username: String, password: String): Result<User> {
         return try {
-            val userEntity = userDao.getUserByUsername(username) ?: return Result.failure(Exception("Invalid credentials"))
-            if (!PasswordUtils.verifyPassword(password, userEntity.passwordHash)) return Result.failure(Exception("Invalid credentials"))
+            val userEntity = userDao.getUserByUsername(username)
+                ?: return Result.failure(Exception("Invalid credentials"))
+
+            // Check if using temporary password
+            val isValidPassword = if (userEntity.isTemp && userEntity.tempPassword != null) {
+                // For temporary passwords, compare directly (not hashed)
+                password == userEntity.tempPassword
+            } else {
+                // For permanent passwords, verify hash
+                PasswordUtils.verifyPassword(password, userEntity.passwordHash)
+            }
+
+            if (!isValidPassword) {
+                return Result.failure(Exception("Invalid credentials"))
+            }
+
             Result.success(mapEntityToDomain(userEntity))
         } catch (e: Exception) {
             Result.failure(e)
@@ -32,6 +46,7 @@ class AuthRepository @Inject constructor(private val userDao: UserDao) {
             createdAt = userEntity.createdAt
         )
     }
+
     suspend fun createUser(
         email: String,
         username: String,
@@ -41,7 +56,9 @@ class AuthRepository @Inject constructor(private val userDao: UserDao) {
         isTemporary: Boolean = false
     ): Result<Long> {
         return try {
-            if (userDao.getUserByUsername(username) != null) return Result.failure(Exception("User exists"))
+            if (userDao.getUserByUsername(username) != null) {
+                return Result.failure(Exception("User exists"))
+            }
 
             val id = userDao.insertUser(
                 UserEntity(
@@ -49,6 +66,7 @@ class AuthRepository @Inject constructor(private val userDao: UserDao) {
                     username = username,
                     passwordHash = PasswordUtils.hashPassword(password),
                     role = role,
+                    tempPassword = if (isTemporary) password else null,
                     isTemp = isTemporary,
                     createdBy = createdBy
                 )

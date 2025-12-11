@@ -43,7 +43,7 @@ object DatabaseModule {
 
                         db.execSQL("""
                             INSERT INTO users (id, email, username, passwordHash, role, tempPassword, isTemp, createdAt)
-                            VALUES (1, 'admin@gracechurch.com', 'admin', '$hashedPassword', 'ADMIN', 'admin123', 1, $currentTime)
+                            VALUES (1, 'admin@gbc.com', 'admin', '$hashedPassword', 'ADMIN', 'admin', 1, $currentTime)
                         """)
                     }
                 }

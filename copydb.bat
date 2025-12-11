@@ -1,0 +1,8 @@
+cd C:\Users\Steve\AppData\Local\Android\Sdk\platform-tools
+adb shell run-as com.gracechurch.gracefulgiving.app cp /data/data/com.gracechurch.gracefulgiving.app/databases/graceful_giving_database.db C:\Users\Steve\AndroidStudioProjects\GracefulGiving\graceful_giving_database.db
+adb shell "run-as com.gracechurch.gracefulgiving.app cp /data/data/com.gracechurch.gracefulgiving.app/databases/graceful_giving_database-wal /data/data/com.gracechurch.gracefulgiving.app/cache/graceful_giving_database-wal"
+adb shell "run-as com.gracechurch.gracefulgiving.app chmod 644 /data/data/com.gracechurch.gracefulgiving.app/cache/graceful_giving_database-wal"
+adb exec-out run-as com.gracechurch.gracefulgiving.app cat /data/data/com.gracechurch.gracefulgiving.app/cache/graceful_giving_database-wal > C:\Users\Steve\AndroidStudioProjects\GracefulGiving\graceful_giving_database-wal
+adb shell "run-as com.gracechurch.gracefulgiving.app cp /data/data/com.gracechurch.gracefulgiving.app/databases/graceful_giving_database-shm /data/data/com.gracechurch.gracefulgiving.app/cache/graceful_giving_database-shm"
+adb shell "run-as com.gracechurch.gracefulgiving.app chmod 644 /data/data/com.gracechurch.gracefulgiving.app/cache/graceful_giving_database-shm"
+adb exec-out run-as com.gracechurch.gracefulgiving.app cat /data/data/com.gracechurch.gracefulgiving.app/cache/graceful_giving_database-shm > C:\Users\Steve\AndroidStudioProjects\GracefulGiving\graceful_giving_database-shm
