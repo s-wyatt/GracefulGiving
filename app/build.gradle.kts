@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.gracechurch.gracefulgiving.app"
+    namespace = "com.gracechurch.gracefulgiving"
     compileSdk = 35
 
     defaultConfig {
@@ -26,37 +26,40 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
     packaging {
         jniLibs {
             useLegacyPackaging = false
         }
     }
-//    androidResources {
-//        noCompress += "tflite"
-//    }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
 }
 
 dependencies {
+    // AndroidX basics
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity.compose)
+
+    // Navigation
     implementation(libs.androidx.navigation.compose)
-    implementation(libs.androidx.material3)
+
+    // Material3
+    implementation(libs.compose.material3)
     implementation(libs.androidx.foundation.layout)
 
     // Compose BOM
-    val composeBom = platform(libs.compose.bom)
-    implementation(composeBom)
+    implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.graphics)
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
     debugImplementation(libs.compose.ui.tooling)
 
-    // Room
+    // Room – USE ONLY VERSION CATALOG
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
@@ -66,12 +69,10 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
-    // Navigation Compose
-    implementation(libs.navigation.compose)
-    // Material
-    implementation("androidx.compose.material:material-icons-extended:1.6.0")
+    // Material Icons
+    implementation(libs.material.icons.extended)
 
-    // CameraX dependencies
+    // CameraX
     val cameraxVersion = "1.4.0"
     implementation("androidx.camera:camera-core:$cameraxVersion")
     implementation("androidx.camera:camera-camera2:$cameraxVersion")

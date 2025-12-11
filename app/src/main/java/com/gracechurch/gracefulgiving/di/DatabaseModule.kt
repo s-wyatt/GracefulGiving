@@ -1,14 +1,20 @@
 package com.gracechurch.gracefulgiving.di
 
 import android.content.Context
-import androidx.room.Room
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.gracechurch.gracefulgiving.data.local.database.GracefulGivingDatabase
 import com.gracechurch.gracefulgiving.data.local.dao.*
+import androidx.room.Room
+import androidx.room.RoomDatabase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import javax.inject.Singleton
 
 @Module
@@ -25,6 +31,23 @@ object DatabaseModule {
             GracefulGivingDatabase::class.java,
             "graceful_giving_database"
         )
+            .addCallback(object : RoomDatabase.Callback() {
+                override fun onCreate(db: SupportSQLiteDatabase) {
+                    super.onCreate(db)
+
+                    // Initialize database with default admin user
+                    CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+                        // Insert default admin user
+                        val hashedPassword = hashPassword("admin")
+                        val currentTime = System.currentTimeMillis()
+
+                        db.execSQL("""
+                            INSERT INTO users (id, email, username, passwordHash, role, tempPassword, isTemp, createdAt)
+                            VALUES (1, 'admin@gracechurch.com', 'admin', '$hashedPassword', 'ADMIN', 'admin123', 1, $currentTime)
+                        """)
+                    }
+                }
+            })
             .fallbackToDestructiveMigration()
             .build()
     }
@@ -57,5 +80,15 @@ object DatabaseModule {
     @Singleton
     fun provideCheckImageDao(database: GracefulGivingDatabase): CheckImageDao {
         return database.checkImageDao()
+    }
+
+    /**
+     * Simple password hashing function
+     * WARNING: This is a basic implementation for development only!
+     * For production, use BCrypt, Argon2, or Android's built-in security libraries
+     */
+    private fun hashPassword(password: String): String {
+        // Basic hash - REPLACE in production with proper hashing
+        return password.hashCode().toString()
     }
 }
