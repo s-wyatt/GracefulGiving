@@ -7,12 +7,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gracechurch.gracefulgiving.presentation.viewmodel.LoginViewModel
 
 @Composable
 fun LoginScreen(
-    vm: LoginViewModel = hiltViewModel(),
+    vm: LoginViewModel = viewModel(),
     onLoginSuccess: (Long) -> Unit  // Add this parameter
 ) {
     val state by vm.uiState.collectAsState()
