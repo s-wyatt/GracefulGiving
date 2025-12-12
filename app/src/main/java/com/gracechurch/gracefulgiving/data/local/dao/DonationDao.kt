@@ -26,6 +26,8 @@ interface DonationDao {
     @Query("SELECT * FROM donations WHERE batchId = :batchId")
     suspend fun getDonationsForBatch(batchId: Long): List<DonationWithDonor>
 
+    @Query("SELECT * FROM donations ORDER BY checkDate DESC")
+    fun getAllDonations(): Flow<List<DonationEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertDonation(donation: DonationEntity): Long

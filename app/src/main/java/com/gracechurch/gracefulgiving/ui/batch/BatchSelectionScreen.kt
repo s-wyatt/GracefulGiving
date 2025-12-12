@@ -1,4 +1,4 @@
-package com.gracechurch.gracefulgiving.presentation.screens.detail
+package com.gracechurch.gracefulgiving.ui.batch
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,7 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.gracechurch.gracefulgiving.presentation.viewmodel.BatchSelectionViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 

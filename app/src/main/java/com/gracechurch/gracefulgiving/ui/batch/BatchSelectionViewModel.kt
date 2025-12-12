@@ -1,9 +1,9 @@
-package com.gracechurch.gracefulgiving.presentation.viewmodel
+package com.gracechurch.gracefulgiving.ui.batch
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gracechurch.gracefulgiving.data.local.relations.BatchWithDonations
-import com.gracechurch.gracefulgiving.data.repository.BatchRepository
+import com.gracechurch.gracefulgiving.domain.repository.BatchRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch

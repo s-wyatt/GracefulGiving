@@ -41,7 +41,10 @@ android {
         }
     }
 }
-
+ksp {
+    arg("room.incremental", "true")
+    arg("room.generateKotlin", "true")
+}
 dependencies {
     // AndroidX basics
     implementation(libs.androidx.core.ktx)

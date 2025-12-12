@@ -1,4 +1,4 @@
-package com.gracechurch.gracefulgiving.presentation.screens.detail
+package com.gracechurch.gracefulgiving.ui.bank
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -12,13 +12,15 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import com.gracechurch.gracefulgiving.app.navigation.Routes
 import com.gracechurch.gracefulgiving.presentation.viewmodel.BankSettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BankSettingsScreen(
-    vm: BankSettingsViewModel = hiltViewModel(),
-    onNavigateBack: () -> Unit
+    navController: NavController,
+    vm: BankSettingsViewModel = hiltViewModel()
 ) {
     val state by vm.uiState.collectAsState()
 
@@ -29,7 +31,6 @@ fun BankSettingsScreen(
     var showAccountNumber by remember { mutableStateOf(false) }
     var showRoutingNumber by remember { mutableStateOf(false) }
 
-    // Load existing settings
     LaunchedEffect(state.settings) {
         state.settings?.let { settings ->
             bankName = settings.bankName
@@ -44,7 +45,7 @@ fun BankSettingsScreen(
             TopAppBar(
                 title = { Text("Bank Settings") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, "Back")
                     }
                 }
@@ -59,10 +60,7 @@ fun BankSettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                "Bank Account Information",
-                style = MaterialTheme.typography.titleLarge
-            )
+            Text("Bank Account Information", style = MaterialTheme.typography.titleLarge)
 
             Text(
                 "This information will be used for deposit slips and reports.",
@@ -93,10 +91,7 @@ fun BankSettingsScreen(
                 onValueChange = { accountNumber = it },
                 label = { Text("Account Number") },
                 placeholder = { Text("Enter account number") },
-                visualTransformation = if (showAccountNumber)
-                    VisualTransformation.None
-                else
-                    PasswordVisualTransformation(),
+                visualTransformation = if (showAccountNumber) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     TextButton(onClick = { showAccountNumber = !showAccountNumber }) {
                         Text(if (showAccountNumber) "Hide" else "Show")
@@ -110,10 +105,7 @@ fun BankSettingsScreen(
                 onValueChange = { routingNumber = it },
                 label = { Text("Routing Number") },
                 placeholder = { Text("9-digit routing number") },
-                visualTransformation = if (showRoutingNumber)
-                    VisualTransformation.None
-                else
-                    PasswordVisualTransformation(),
+                visualTransformation = if (showRoutingNumber) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     TextButton(onClick = { showRoutingNumber = !showRoutingNumber }) {
                         Text(if (showRoutingNumber) "Hide" else "Show")
@@ -138,20 +130,18 @@ fun BankSettingsScreen(
                 Text("Save Settings")
             }
 
+            Spacer(Modifier.height(20.dp))
+
+            Button(onClick = { navController.navigate(Routes.DASHBOARD) }) {
+                Text("Back to Dashboard")
+            }
+
             state.error?.let { error ->
-                Text(
-                    error,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall
-                )
+                Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             }
 
             state.successMessage?.let { message ->
-                Text(
-                    message,
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodySmall
-                )
+                Text(message, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
             }
         }
     }

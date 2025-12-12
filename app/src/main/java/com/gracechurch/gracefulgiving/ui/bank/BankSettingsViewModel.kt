@@ -1,4 +1,4 @@
-package com.gracechurch.gracefulgiving.presentation.viewmodel
+package com.gracechurch.gracefulgiving.ui.bank
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -49,6 +49,10 @@ class BankSettingsViewModel @Inject constructor(
                         error = null
                     )
                 }
+
+                // Clear success message after 3 seconds
+                kotlinx.coroutines.delay(3000)
+                _uiState.update { it.copy(successMessage = null) }
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
@@ -58,6 +62,14 @@ class BankSettingsViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun clearError() {
+        _uiState.update { it.copy(error = null) }
+    }
+
+    fun clearSuccessMessage() {
+        _uiState.update { it.copy(successMessage = null) }
     }
 }
 

@@ -1,16 +1,14 @@
-package com.gracechurch.gracefulgiving.presentation.navigation
+package com.gracechurch.gracefulgiving.app.navigation
 
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.gracechurch.gracefulgiving.presentation.screens.detail.BankSettingsScreen
-import com.gracechurch.gracefulgiving.presentation.screens.detail.BatchEntryScreen
-import com.gracechurch.gracefulgiving.presentation.screens.detail.BatchSelectionScreen
+import com.gracechurch.gracefulgiving.ui.bank.BankSettingsScreen
+import com.gracechurch.gracefulgiving.ui.batch.BatchEntryScreen
+import com.gracechurch.gracefulgiving.ui.batch.BatchSelectionScreen
 import com.gracechurch.gracefulgiving.presentation.screens.home.LoginScreen
 
 @Composable

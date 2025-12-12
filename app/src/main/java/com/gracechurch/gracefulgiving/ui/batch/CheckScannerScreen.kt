@@ -1,7 +1,8 @@
-package com.gracechurch.gracefulgiving.presentation.screens.detail
+package com.gracechurch.gracefulgiving.ui.batch
 
 import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -51,7 +52,7 @@ fun CheckScannerScreen(onDismiss: () -> Unit, onScanComplete: (ScannedCheckData)
         val hasPermission = ContextCompat.checkSelfPermission(
             ctx,
             Manifest.permission.CAMERA
-        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) == PackageManager.PERMISSION_GRANTED
 
         if (hasPermission) {
             permissionState = PermissionState.GRANTED
