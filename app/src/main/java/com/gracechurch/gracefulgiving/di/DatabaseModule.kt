@@ -1,8 +1,9 @@
 package com.gracechurch.gracefulgiving.di
 
+import com.gracechurch.gracefulgiving.data.local.database.GracefulGivingDatabase
+
 import android.content.Context
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.gracechurch.gracefulgiving.data.local.database.GracefulGivingDatabase
 import com.gracechurch.gracefulgiving.data.local.dao.*
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -81,7 +82,11 @@ object DatabaseModule {
     fun provideCheckImageDao(database: GracefulGivingDatabase): CheckImageDao {
         return database.checkImageDao()
     }
-
+    @Provides
+    @Singleton
+    fun provideBankSettingsDao(database: GracefulGivingDatabase): BankSettingsDao {
+        return database.bankSettingsDao()
+    }
     /**
      * Simple password hashing function
      * WARNING: This is a basic implementation for development only!

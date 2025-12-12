@@ -29,7 +29,6 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.gracechurch.gracefulgiving.domain.model.ScannedCheckData
 import java.io.ByteArrayOutputStream
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -187,23 +186,43 @@ fun CheckScannerScreen(onDismiss: () -> Unit, onScanComplete: (ScannedCheckData)
 private fun processCheckImage(imageProxy: ImageProxy, onResult: (ScannedCheckData) -> Unit) {
     val mediaImage = imageProxy.image
     if (mediaImage != null) {
-        val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+        val fullImage = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
 
         // Convert to Base64 for storage
         val bitmap = imageProxy.toBitmap()
         val base64Image = bitmapToBase64(bitmap)
 
-        // Perform OCR
+        // Create cropped region for check number (upper right quadrant)
+        val upperRightBitmap = cropBitmap(bitmap, 0.5f, 0f, 1f, 0.25f)
+        val upperRightImage = InputImage.fromBitmap(upperRightBitmap, 0)
+
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-        recognizer.process(image)
-            .addOnSuccessListener { visionText ->
-                val text = visionText.text
 
-                // Parse the OCR text to extract check info
-                val checkData = parseCheckText(text, base64Image)
+        // First, process upper right for check number
+        recognizer.process(upperRightImage)
+            .addOnSuccessListener { checkNumText ->
+                val checkNumber = extractCheckNumber(checkNumText.text)
 
-                imageProxy.close()
-                onResult(checkData)
+                // Then process full image for name and amount
+                recognizer.process(fullImage)
+                    .addOnSuccessListener { visionText ->
+                        val text = visionText.text
+                        val checkData = parseCheckText(text, checkNumber, base64Image)
+
+                        imageProxy.close()
+                        onResult(checkData)
+                    }
+                    .addOnFailureListener {
+                        imageProxy.close()
+                        // Return with just check number if full image fails
+                        onResult(ScannedCheckData(
+                            firstName = "",
+                            lastName = "",
+                            checkNumber = checkNumber,
+                            amount = "",
+                            imageData = base64Image
+                        ))
+                    }
             }
             .addOnFailureListener {
                 imageProxy.close()
@@ -222,26 +241,49 @@ private fun processCheckImage(imageProxy: ImageProxy, onResult: (ScannedCheckDat
     }
 }
 
-private fun parseCheckText(text: String, imageData: String): ScannedCheckData {
-    // Simple parsing logic - you'll need to refine this based on your check format
+/**
+ * Crops a bitmap to a specific region
+ * @param left Percentage from left (0.0 to 1.0)
+ * @param top Percentage from top (0.0 to 1.0)
+ * @param right Percentage from left (0.0 to 1.0)
+ * @param bottom Percentage from top (0.0 to 1.0)
+ */
+private fun cropBitmap(bitmap: Bitmap, left: Float, top: Float, right: Float, bottom: Float): Bitmap {
+    val width = bitmap.width
+    val height = bitmap.height
+
+    val x = (width * left).toInt()
+    val y = (height * top).toInt()
+    val cropWidth = (width * (right - left)).toInt()
+    val cropHeight = (height * (bottom - top)).toInt()
+
+    return Bitmap.createBitmap(bitmap, x, y, cropWidth, cropHeight)
+}
+
+/**
+ * Extracts check number from upper right region text
+ * Looks for 3-6 digit numbers
+ */
+private fun extractCheckNumber(text: String): String {
+    val checkNumRegex = "\\b\\d{3,6}\\b".toRegex()
+    return checkNumRegex.find(text)?.value ?: ""
+}
+
+/**
+ * Parses the full check text for name and amount
+ */
+private fun parseCheckText(text: String, checkNumber: String, imageData: String): ScannedCheckData {
     val lines = text.lines().filter { it.isNotBlank() }
 
     var firstName = ""
     var lastName = ""
-    var checkNumber = ""
     var amount = ""
-
-    // Look for check number (usually starts with a digit)
-    val checkNumRegex = "\\b\\d{3,6}\\b".toRegex()
-    checkNumber = checkNumRegex.find(text)?.value ?: ""
 
     // Look for dollar amounts
     val amountRegex = "\\$?\\d+\\.\\d{2}".toRegex()
     amount = amountRegex.find(text)?.value?.replace("$", "") ?: ""
 
-    // Try to find name (this is tricky and depends on check format)
-    // Usually the payee line contains the name
-    // You may need to look for keywords like "Pay to the order of" or similar
+    // Try to find name (usually on second line after filtering)
     if (lines.size >= 2) {
         val nameParts = lines[1].trim().split(" ")
         if (nameParts.size >= 2) {

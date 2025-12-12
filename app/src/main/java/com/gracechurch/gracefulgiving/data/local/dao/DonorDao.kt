@@ -22,8 +22,8 @@ interface DonorDao {
     @Query("SELECT * FROM donors ORDER BY lastName, firstName")
     suspend fun getAllDonors(): List<DonorEntity>
 
-//    @Query("SELECT * FROM donors WHERE optOutStatement = 0 ORDER BY lastName, firstName")
-//    suspend fun getDonorsOptedIn(): List<DonorEntity>
+   @Query("SELECT * FROM donors WHERE firstName = :firstName AND lastName = :lastName LIMIT 1")
+    suspend fun getDonorByName(firstName: String, lastName: String): DonorEntity?
 
     @Insert
     suspend fun insertDonor(donor: DonorEntity): Long

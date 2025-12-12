@@ -5,9 +5,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -16,16 +19,22 @@ import com.gracechurch.gracefulgiving.presentation.viewmodel.BatchEntryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BatchEntryScreen(vm: BatchEntryViewModel = hiltViewModel(), userId: Long) {
+fun BatchEntryScreen(
+    // CORRECTED PARAMETERS: Receive batchId and onNavigateBack as passed from navigation
+    batchId: Long,
+    onNavigateBack: () -> Unit,
+    vm: BatchEntryViewModel = hiltViewModel()
+) {
 
     val state by vm.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var showScanner by remember { mutableStateOf(false) }
 
-    // Create batch once
-    LaunchedEffect(Unit) {
-        if (state.batchWithDonations == null) {
-            vm.createBatch(System.currentTimeMillis(), userId)
+    // CORRECTED LOGIC: Load the batch using the batchId from the navigation argument.
+    // The key ensures this effect runs only when batchId changes.
+    LaunchedEffect(batchId) {
+        if (batchId > 0L) {
+            vm.loadBatch(batchId)
         }
     }
 
@@ -38,7 +47,17 @@ fun BatchEntryScreen(vm: BatchEntryViewModel = hiltViewModel(), userId: Long) {
     val totalAmountText = "$${"%.2f".format(totalAmount)}"
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Batch Entry: $batchNumberText") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Batch Entry: $batchNumberText") },
+                // Add a back button to navigate away from this screen
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = { showDialog = true }) {
                 Icon(Icons.Default.Add, contentDescription = "Add")
@@ -99,13 +118,16 @@ fun BatchEntryScreen(vm: BatchEntryViewModel = hiltViewModel(), userId: Long) {
     if (showDialog) {
         DonationEntryDialog(
             scannedData = state.scannedData,
+            // CORRECTED: Ensure we have a valid batchId before allowing a donation to be added
+            batchId = batchWithDonations?.batch?.batchId ?: 0L,
             batchDate = batchWithDonations?.batch?.createdOn ?: System.currentTimeMillis(),
             onDismiss = {
                 showDialog = false
                 vm.clearScannedData()
             },
-            onSave = { fn, ln, cn, amt, dt, img ->
-                vm.addDonation(fn, ln, cn, amt, dt, img)
+            onSave = { fn, ln, cn, amt, dt, img, bId ->
+                // Pass the correct batchId when adding the donation
+                vm.addDonation(fn, ln, cn, amt, dt, img, bId)
                 showDialog = false
                 vm.clearScannedData()
             }
@@ -128,9 +150,11 @@ fun BatchEntryScreen(vm: BatchEntryViewModel = hiltViewModel(), userId: Long) {
 @Composable
 fun DonationEntryDialog(
     scannedData: ScannedCheckData?,
+    batchId: Long, // Add batchId as a parameter
     batchDate: Long,
     onDismiss: () -> Unit,
-    onSave: (String, String, String, Double, Long, String?) -> Unit
+    // Update onSave signature to include batchId
+    onSave: (String, String, String, Double, Long, String?, Long) -> Unit
 ) {
     var firstName by remember { mutableStateOf(scannedData?.firstName ?: "") }
     var lastName by remember { mutableStateOf(scannedData?.lastName ?: "") }
@@ -152,11 +176,15 @@ fun DonationEntryDialog(
             }
         },
         confirmButton = {
-            Button(onClick = {
-                amount.toDoubleOrNull()?.let { amt ->
-                    onSave(firstName, lastName, checkNumber, amt, batchDate, scannedData?.imageData)
+            Button(
+                // Disable button if batchId is not valid
+                enabled = batchId > 0L,
+                onClick = {
+                    amount.toDoubleOrNull()?.let { amt ->
+                        onSave(firstName, lastName, checkNumber, amt, batchDate, scannedData?.imageData, batchId)
+                    }
                 }
-            }) { Text("Save") }
+            ) { Text("Save") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )

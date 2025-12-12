@@ -23,4 +23,10 @@ interface BatchDao {
     @Query("SELECT * FROM batches WHERE batchId = :id")
     fun getBatchWithDonations(id: Long): Flow<BatchWithDonations?>
 
+    @Query("SELECT * FROM batches ORDER BY createdOn DESC")
+    fun getAllBatchesWithDonations(): Flow<List<BatchWithDonations>>
+
+    companion object {
+        var allBatchesWithDonations: Flow<List<BatchWithDonations>> = TODO("initialize me")
+    }
 }

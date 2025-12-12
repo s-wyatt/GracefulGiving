@@ -27,6 +27,8 @@ class BatchRepository @Inject constructor(
             )
         )
     }
+    fun getAllBatches(): Flow<List<BatchWithDonations>> =
+        dao.getAllBatchesWithDonations()
 
     suspend fun addDonation(
         firstName: String,
