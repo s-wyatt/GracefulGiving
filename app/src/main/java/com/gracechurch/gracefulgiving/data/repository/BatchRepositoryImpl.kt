@@ -1,22 +1,25 @@
 package com.gracechurch.gracefulgiving.data.repository
 
 import com.gracechurch.gracefulgiving.data.local.dao.BatchDao
-import com.gracechurch.gracefulgiving.data.local.dao.CheckImageDao
+// import com.gracechurch.gracefulgiving.data.local.dao.CheckImageDao // No longer needed here
+// import com.gracechurch.gracefulgiving.data.local.entity.CheckImageEntity // No longer needed
+// import com.gracechurch.gracefulgiving.data.local.entity.DonationEntity // No longer needed
+// import com.gracechurch.gracefulgiving.data.local.entity.DonorEntity // No longer needed
 import com.gracechurch.gracefulgiving.data.local.entity.BatchEntity
-import com.gracechurch.gracefulgiving.data.local.entity.CheckImageEntity
-import com.gracechurch.gracefulgiving.data.local.entity.DonationEntity
-import com.gracechurch.gracefulgiving.data.local.entity.DonorEntity
 import com.gracechurch.gracefulgiving.data.local.relations.BatchWithDonations
 import com.gracechurch.gracefulgiving.domain.repository.BatchRepository
+import com.gracechurch.gracefulgiving.domain.repository.DonationRepository // <-- Import DonationRepository
+import com.gracechurch.gracefulgiving.ui.dashboard.BatchInfo
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
+// GENTLE FIX: Simplify the constructor
 class BatchRepositoryImpl @Inject constructor(
     private val dao: BatchDao,
-    private val checkImageDao: CheckImageDao
+    private val donationRepo: DonationRepository // <-- Inject the repository, not the DAOs
 ) : BatchRepository {
 
-    // GENTLE FIX: Implement the method to return the Flow directly from the DAO
     override fun getAllBatches(): Flow<List<BatchWithDonations>> =
         dao.getAllBatchesWithDonations()
 
@@ -24,9 +27,7 @@ class BatchRepositoryImpl @Inject constructor(
         dao.getBatchWithDonations(id)
 
     override suspend fun createBatch(userId: Long): Long {
-        // You will need to add getNextBatchNumber to your BatchDao
         val nextBatchNumber = (dao.getMaxBatchNumber() ?: 0) + 1
-
         return dao.insertBatch(
             BatchEntity(
                 batchNumber = nextBatchNumber,
@@ -40,6 +41,7 @@ class BatchRepositoryImpl @Inject constructor(
         dao.deleteBatch(batchId)
     }
 
+    // GENTLE FIX: Delegate the addDonation call to the DonationRepository
     override suspend fun addDonation(
         firstName: String,
         lastName: String,
@@ -49,45 +51,24 @@ class BatchRepositoryImpl @Inject constructor(
         image: String?,
         batchId: Long
     ) {
-        // This implementation seems to have a bug: it creates a new donor every time.
-        // A real implementation would find or create the donor.
-        // For now, leaving it as is.
-        val donorId = dao.insertDonor(
-            DonorEntity(
-                firstName = firstName,
-                lastName = lastName
-            )
-        )
+        donationRepo.addDonation(firstName, lastName, checkNumber, amount, date, image, batchId)
+    }
 
-        val donationId = dao.insertDonation(
-            DonationEntity(
-                donorId = donorId,
-                batchId = batchId,
-                checkNumber = checkNumber,
-                checkAmount = amount,
-                checkDate = date,
-                checkImage = image
-            )
-        )
-
-        if (!image.isNullOrBlank()) {
-            checkImageDao.insertCheckImage(
-                CheckImageEntity(
-                    donationId = donationId,
-                    batchId = batchId,
-                    donorId = donorId,
-                    imageData = image,
-                    capturedAt = System.currentTimeMillis()
-                )
+    override suspend fun getOpenBatches(): List<BatchInfo> {
+        return dao.getAllBatchesWithDonations().first().map { batchWithDonations ->
+            BatchInfo(
+                batchId = batchWithDonations.batch.batchId,
+                batchName = "Batch #${batchWithDonations.batch.batchNumber}",
+                total = batchWithDonations.donations.sumOf { it.donation.checkAmount }
             )
         }
     }
 
     override suspend fun generateBatchReport(batchId: Long) {
-        // Implement PDF export here
+        // TODO: Implement PDF export here
     }
 
     override suspend fun generateDepositSlip(batchId: Long) {
-        // Implement PDF export here
+        // TODO: Implement PDF export here
     }
 }

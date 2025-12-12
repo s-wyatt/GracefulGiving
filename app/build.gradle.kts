@@ -11,7 +11,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.gracechurch.gracefulgiving.app"
+        applicationId = "com.gracechurch.gracefulgiving"
         minSdk = 24
         targetSdk = 35
         versionCode = 1
@@ -50,23 +50,22 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity.compose)
-// ML Kit Text Recognition
-    implementation("com.google.mlkit:text-recognition:16.0.1")
+
+    // ML Kit Text Recognition - GENTLE FIX: Now using version catalog
+    implementation(libs.mlkit.text.recognition)
+
     // Navigation
     implementation(libs.androidx.navigation.compose)
 
-    // Material3
-    implementation(libs.compose.material3)
-//    implementation(libs.androidx.foundation.layout)
-
-    // Compose BOM
+    // Compose BOM - Best Practice: Declare this first among Compose dependencies
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.graphics)
     implementation(libs.compose.ui.tooling.preview)
+    implementation(libs.compose.material3)
     debugImplementation(libs.compose.ui.tooling)
 
-    // Room – USE ONLY VERSION CATALOG
+    // Room
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
@@ -79,10 +78,9 @@ dependencies {
     // Material Icons
     implementation(libs.material.icons.extended)
 
-    // CameraX
-    val cameraxVersion = "1.4.0"
-    implementation("androidx.camera:camera-core:$cameraxVersion")
-    implementation("androidx.camera:camera-camera2:$cameraxVersion")
-    implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
-    implementation("androidx.camera:camera-view:$cameraxVersion")
+    // CameraX - GENTLE FIX: Now using version catalog
+    implementation(libs.camerax.core)
+    implementation(libs.camerax.camera2)
+    implementation(libs.camerax.lifecycle)
+    implementation(libs.camerax.view)
 }

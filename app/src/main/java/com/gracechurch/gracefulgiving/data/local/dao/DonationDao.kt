@@ -32,6 +32,9 @@ interface DonationDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertDonation(donation: DonationEntity): Long
 
+
+    @Query("SELECT SUM(checkAmount) FROM donations WHERE checkDate >= :sinceDate")
+    suspend fun getTotalDonationsSince(sinceDate: Long): Double?
     @Update
     suspend fun updateDonation(donation: DonationEntity)
 

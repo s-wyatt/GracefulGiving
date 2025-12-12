@@ -14,13 +14,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-// This data class is a placeholder for your actual batch data model.
-// You can replace it with the model from your domain layer.
-data class BatchInfo(
-    val batchId: Long,
-    val batchName: String,
-    val total: Double
-)
 
 @Composable
 fun TotalsRow(mtd: Double, qtd: Double, ytd: Double) {

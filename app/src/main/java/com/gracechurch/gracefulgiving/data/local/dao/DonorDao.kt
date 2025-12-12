@@ -43,11 +43,6 @@ interface DonorDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertDonor(donor: DonorEntity): Long
 
-
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertDonation(donation: DonationEntity): Long
-
     @Update
     suspend fun updateDonor(donor: DonorEntity)
 

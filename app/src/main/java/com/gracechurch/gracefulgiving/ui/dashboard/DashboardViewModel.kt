@@ -7,8 +7,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import com.gracechurch.gracefulgiving.data.repository.BatchRepository
-import com.gracechurch.gracefulgiving.data.repository.DonationRepository
+import com.gracechurch.gracefulgiving.domain.repository.DonationRepository
+import com.gracechurch.gracefulgiving.domain.repository.BatchRepository
 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
