@@ -7,7 +7,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.gracechurch.gracefulgiving.ui.batch.BatchEntryScreen
-import com.gracechurch.gracefulgiving.ui.bank.BankSettingsScreen
 import com.gracechurch.gracefulgiving.ui.batch.BatchManagementScreen
 import com.gracechurch.gracefulgiving.ui.dashboard.DashboardScreen
 import com.gracechurch.gracefulgiving.ui.donor.DonorsDonationsScreen
@@ -25,9 +24,6 @@ fun AppNavGraph(navController: NavHostController, userId: Long) {
         }
         composable(Routes.DONORS_DONATIONS) {
             DonorsDonationsScreen(navController)
-        }
-        composable(Routes.BANK_SETTINGS) {
-            BankSettingsScreen()
         }
         composable(Routes.YEARLY_STATEMENTS) {
             YearlyStatementsScreen(navController)

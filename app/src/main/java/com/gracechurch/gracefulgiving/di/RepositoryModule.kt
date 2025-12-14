@@ -1,14 +1,12 @@
 package com.gracechurch.gracefulgiving.di
 
 import com.gracechurch.gracefulgiving.data.repository.AuthRepositoryImpl
-import com.gracechurch.gracefulgiving.data.repository.BankSettingsRepositoryImpl
 import com.gracechurch.gracefulgiving.data.repository.BatchRepositoryImpl
 import com.gracechurch.gracefulgiving.data.repository.DonationRepositoryImpl
 import com.gracechurch.gracefulgiving.data.repository.DonorRepositoryImpl
 import com.gracechurch.gracefulgiving.data.repository.FundRepositoryImpl
 import com.gracechurch.gracefulgiving.data.repository.UserRepositoryImpl
 import com.gracechurch.gracefulgiving.domain.repository.AuthRepository
-import com.gracechurch.gracefulgiving.domain.repository.BankSettingsRepository
 import com.gracechurch.gracefulgiving.domain.repository.BatchRepository
 import com.gracechurch.gracefulgiving.domain.repository.DonationRepository
 import com.gracechurch.gracefulgiving.domain.repository.DonorRepository
@@ -32,11 +30,6 @@ abstract class RepositoryModule {
     abstract fun bindDonationRepository(
         donationRepositoryImpl: DonationRepositoryImpl
     ): DonationRepository
-
-    @Binds
-    abstract fun bindBankSettingsRepository(
-        bankSettingsRepositoryImpl: BankSettingsRepositoryImpl
-    ): BankSettingsRepository
 
     @Binds
     abstract fun bindBatchRepository(

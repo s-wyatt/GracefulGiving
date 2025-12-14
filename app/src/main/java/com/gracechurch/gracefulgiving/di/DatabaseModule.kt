@@ -45,17 +45,17 @@ object DatabaseModule {
                         db.execSQL("""
                             INSERT INTO users (id, email, username, passwordHash, role, tempPassword, isTemp, createdAt)
                             VALUES (1, 'admin@gbc.com', 'admin', '$hashedPassword', 'ADMIN', 'admin', 1, $currentTime)
-                        """)
+                        """ )
 
                         // Insert default funds
                         db.execSQL("""
                             INSERT INTO funds (fundId, name, bankName, accountName, accountNumber)
                             VALUES (1, 'General Fund', 'Default Bank', 'General Account', '1234567890')
-                        """)
+                        """ )
                         db.execSQL("""
                             INSERT INTO funds (fundId, name, bankName, accountName, accountNumber)
                             VALUES (2, 'Deacons'' Fund', 'Default Bank', 'Deacons Account', '0987654321')
-                        """)
+                        """ )
                     }
                 }
             })
@@ -91,11 +91,6 @@ object DatabaseModule {
     @Singleton
     fun provideCheckImageDao(database: GracefulGivingDatabase): CheckImageDao {
         return database.checkImageDao()
-    }
-    @Provides
-    @Singleton
-    fun provideBankSettingsDao(database: GracefulGivingDatabase): BankSettingsDao {
-        return database.bankSettingsDao()
     }
 
     @Provides

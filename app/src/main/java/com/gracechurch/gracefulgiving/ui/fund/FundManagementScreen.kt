@@ -6,7 +6,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -35,7 +34,7 @@ fun FundManagementScreen(
                 title = { Text("Fund Management") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateUp) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -59,8 +58,8 @@ fun FundManagementScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(fund.name, style = MaterialTheme.typography.titleMedium)
-                            Text("Bank: ${fund.bankName}", style = MaterialTheme.typography.bodySmall)
-                            Text("Account: ${fund.accountNumber}", style = MaterialTheme.typography.bodySmall)
+                            Text("Bank: ${'$'}{fund.bankName}", style = MaterialTheme.typography.bodySmall)
+                            Text("Account: ${'$'}{fund.accountNumber}", style = MaterialTheme.typography.bodySmall)
                         }
                         IconButton(onClick = {
                             selectedFund = fund

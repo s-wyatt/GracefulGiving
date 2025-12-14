@@ -21,7 +21,7 @@ fun BatchSelectionScreen(
     vm: BatchSelectionViewModel = hiltViewModel(),
     userId: Long,
     onNavigateToBatchEntry: (Long) -> Unit,
-    onNavigateToSettings: () -> Unit
+    onNavigateUp: () -> Unit
 ) {
     val state by vm.uiState.collectAsState()
     val batches = state.batches
@@ -45,10 +45,10 @@ fun BatchSelectionScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Batch Management") },
-                actions = {
-                    IconButton(onClick = onNavigateToSettings) {
-                        Icon(Icons.Default.Settings, "Settings")
+                title = { Text("Batches") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateUp) {
+                        Icon(Icons.Default.Close, "Close")
                     }
                 }
             )
