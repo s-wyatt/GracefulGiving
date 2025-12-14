@@ -3,11 +3,13 @@ package com.gracechurch.gracefulgiving.ui.statements
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gracechurch.gracefulgiving.domain.model.Donation
+import com.gracechurch.gracefulgiving.domain.model.Donor
 import com.gracechurch.gracefulgiving.domain.repository.DonationRepository
 import com.gracechurch.gracefulgiving.domain.repository.DonorRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -23,6 +25,8 @@ class YearlyStatementsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(YearlyStatementsUiState())
     val uiState = _uiState.asStateFlow()
 
+    private var allDonations: List<Donation> = emptyList()
+
     init {
         loadInitialData()
     }
@@ -31,28 +35,19 @@ class YearlyStatementsViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             try {
+                // Fetch all donors and donations just once
                 val donors = donorRepository.getAllDonors()
+                // Use .first() to get a single snapshot of the donations for initial setup
+                allDonations = donationRepository.getAllDonations().first()
 
-                // Collect the Flow to get the list
-                val allDonations = donationRepository.getAllDonations().first()
-
+                // Extract available years from all donations
                 val years = allDonations.map { donation ->
                     val calendar = Calendar.getInstance()
-                    calendar.timeInMillis = donation.checkDate  // Changed from donation.date
+                    calendar.timeInMillis = donation.checkDate // Use checkDate from Donation model
                     calendar.get(Calendar.YEAR).toString()
-                }.distinct().sortedDescending()
+                }.distinct().sortedDescending() // Sort years with newest first
 
-                // Set the most recent year as default
-                val defaultYear = years.firstOrNull()
-
-                _uiState.update {
-                    it.copy(
-                        donors = donors,
-                        years = years,
-                        selectedYear = defaultYear,
-                        isLoading = false
-                    )
-                }
+                _uiState.update { it.copy(donors = donors, years = years, isLoading = false) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = e.message, isLoading = false) }
             }
@@ -61,47 +56,38 @@ class YearlyStatementsViewModel @Inject constructor(
 
     fun onYearSelected(year: String) {
         _uiState.update { it.copy(selectedYear = year) }
+        // When a year is selected, also clear any previously selected donor donations
+        // to force a recalculation when a donor is clicked next.
+        onDonorSelected(it.selectedDonorId)
     }
 
-    fun onDonorSelected(donorId: Long) {
-        if (donorId == 0L) {
-            // Clear selection
+    fun onDonorSelected(donorId: Long?) {
+        _uiState.update { it.copy(selectedDonorId = donorId) }
+
+        if (donorId == null || donorId <= 0L) {
+            // If donor is deselected, clear the donations
             _uiState.update { it.copy(selectedDonorDonations = emptyList()) }
             return
         }
 
-        viewModelScope.launch {
-            try {
-                // Collect the Flow and filter by selected year
-                donationRepository.getDonationsByDonor(donorId).collect { donations ->
-                    val filteredDonations = if (_uiState.value.selectedYear != null) {
-                        donations.filter { donation ->
-                            val calendar = Calendar.getInstance()
-                            calendar.timeInMillis = donation.checkDate  // Changed from donation.date
-                            calendar.get(Calendar.YEAR).toString() == _uiState.value.selectedYear
-                        }
-                    } else {
-                        donations
-                    }
-                    _uiState.update { it.copy(selectedDonorDonations = filteredDonations) }
-                }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(error = e.message) }
-            }
+        // Filter the locally stored donations based on donorId and selectedYear
+        val filteredDonations = allDonations.filter { donation ->
+            val calendar = Calendar.getInstance().apply { timeInMillis = donation.checkDate }
+            val donationYear = calendar.get(Calendar.YEAR).toString()
+            donation.donorId == donorId && donationYear == _uiState.value.selectedYear
         }
-    }
 
-    fun generateStatement(donorId: Long) {
-        // TODO: Implement PDF generation for the selected donor's yearly statement
+        _uiState.update { it.copy(selectedDonorDonations = filteredDonations) }
     }
 }
 
 data class YearlyStatementsUiState(
-    val donors: List<com.gracechurch.gracefulgiving.domain.model.Donor> = emptyList(),
+    val donors: List<Donor> = emptyList(),
     val selectedDonorDonations: List<Donation> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
     val successMessage: String? = null,
     val years: List<String> = emptyList(),
-    val selectedYear: String? = null
+    val selectedYear: String? = null,
+    val selectedDonorId: Long? = null // Keep track of the selected donor
 )

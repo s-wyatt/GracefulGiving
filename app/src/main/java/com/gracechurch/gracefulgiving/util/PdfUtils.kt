@@ -5,19 +5,18 @@ import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import android.os.Environment
 import android.widget.Toast
-import com.gracechurch.gracefulgiving.data.local.entity.BankSettingsEntity
-import com.gracechurch.gracefulgiving.data.local.relations.DonationWithDonor
+import com.gracechurch.gracefulgiving.domain.model.Donation
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-fun printDepositSlip(
+fun printYearlyStatement(
     context: Context,
-    bankSettings: BankSettingsEntity?,
-    donations: List<DonationWithDonor>,
-    batchDate: Long
+    donorName: String,
+    donations: List<Donation>,
+    year: String
 ): File {
     val pdfDocument = PdfDocument()
     val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
@@ -27,44 +26,36 @@ fun printDepositSlip(
     val sdf = SimpleDateFormat("MM/dd/yyyy", Locale.US)
 
     var y = 40f
-    paint.textSize = 12f
-
-    canvas.drawText("Deposit Slip", 10f, y, paint)
-    y += 20
-    canvas.drawText("Batch Date: ${sdf.format(Date(batchDate))}", 10f, y, paint)
+    paint.textSize = 16f
+    canvas.drawText("Yearly Giving Statement for $donorName - $year", 10f, y, paint)
     y += 40
 
-    bankSettings?.let {
-        canvas.drawText("Bank Name: ${it.bankName}", 10f, y, paint)
-        y += 20
-        canvas.drawText("Account Name: ${it.accountName}", 10f, y, paint)
-        y += 20
-        canvas.drawText("Account Number: ${it.accountNumber}", 10f, y, paint)
-        y += 40
-    }
-
-    canvas.drawText("Donations:", 10f, y, paint)
-    y += 20
-
+    paint.textSize = 12f
     donations.forEach {
-        canvas.drawText("${it.donor.firstName} ${it.donor.lastName} - #${it.donation.checkNumber} - $${"%.2f".format(it.donation.checkAmount)}", 10f, y, paint)
+        canvas.drawText("Date: ${sdf.format(Date(it.date))}", 10f, y, paint)
+        canvas.drawText("Check Number: ${it.checkNumber}", 200f, y, paint)
+        canvas.drawText("Amount: $${it.amount}", 400f, y, paint)
         y += 20
     }
 
     y += 20
-    canvas.drawText("Total Checks: ${donations.size}", 10f, y, paint)
+    canvas.drawLine(10f, y, 585f, y, paint)
     y += 20
-    canvas.drawText("Total Amount: $${"%.2f".format(donations.sumOf { it.donation.checkAmount })}", 10f, y, paint)
+
+    paint.textSize = 14f
+    canvas.drawText("Total Donations: ${donations.size}", 10f, y, paint)
+    y += 20
+    canvas.drawText("Total Amount: $${"%.2f".format(donations.sumOf { it.amount })}", 10f, y, paint)
 
     pdfDocument.finishPage(page)
 
-    val file = File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "deposit_slip.pdf")
+    val file = File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "yearly_statement_${donorName.replace(" ", "_")}_$year.pdf")
     try {
         pdfDocument.writeTo(FileOutputStream(file))
-        Toast.makeText(context, "Deposit slip saved to ${file.absolutePath}", Toast.LENGTH_LONG).show()
+        Toast.makeText(context, "Statement saved to ${file.absolutePath}", Toast.LENGTH_LONG).show()
     } catch (e: Exception) {
         e.printStackTrace()
-        Toast.makeText(context, "Error saving deposit slip", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "Error saving statement", Toast.LENGTH_SHORT).show()
     }
     pdfDocument.close()
     return file

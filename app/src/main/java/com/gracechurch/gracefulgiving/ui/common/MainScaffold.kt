@@ -4,15 +4,21 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.*
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.gracechurch.gracefulgiving.app.navigation.AppNavGraph
-import com.gracechurch.gracefulgiving.app.navigation.Routes
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -22,38 +28,11 @@ fun MainScaffold(userId: Long) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
-
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet {
-                NavigationDrawerItem(
-                    label = { Text("Dashboard") },
-                    selected = currentRoute == Routes.DASHBOARD,
-                    onClick = { navController.navigate(Routes.DASHBOARD); scope.launch { drawerState.close() } }
-                )
-                NavigationDrawerItem(
-                    label = { Text("Batch Management") },
-                    selected = currentRoute == Routes.BATCH_MANAGEMENT,
-                    onClick = { navController.navigate(Routes.BATCH_MANAGEMENT); scope.launch { drawerState.close() } }
-                )
-                NavigationDrawerItem(
-                    label = { Text("Donors") },
-                    selected = currentRoute == Routes.DONORS_DONATIONS,
-                    onClick = { navController.navigate(Routes.DONORS_DONATIONS); scope.launch { drawerState.close() } }
-                )
-                NavigationDrawerItem(
-                    label = { Text("Yearly Giving Statements") },
-                    selected = currentRoute == Routes.YEARLY_STATEMENTS,
-                    onClick = { navController.navigate(Routes.YEARLY_STATEMENTS); scope.launch { drawerState.close() } }
-                )
-                NavigationDrawerItem(
-                    label = { Text("Bank Settings") },
-                    selected = currentRoute == Routes.BANK_SETTINGS,
-                    onClick = { navController.navigate(Routes.BANK_SETTINGS); scope.launch { drawerState.close() } }
-                )
+                // Drawer content will be added here in a future step
             }
         }
     ) {

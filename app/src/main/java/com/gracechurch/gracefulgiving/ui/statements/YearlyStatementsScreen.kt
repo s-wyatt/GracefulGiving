@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -67,12 +68,13 @@ fun YearlyStatementsScreen(
         ) {
             var expanded by remember { mutableStateOf(false) }
 
+            // Year selection dropdown
             ExposedDropdownMenuBox(
                 expanded = expanded,
                 onExpandedChange = { expanded = !expanded }
             ) {
                 OutlinedTextField(
-                    value = state.selectedYear ?: "",
+                    value = state.selectedYear ?: "Select a Year",
                     onValueChange = {},
                     label = { Text("Year") },
                     readOnly = true,
@@ -105,22 +107,27 @@ fun YearlyStatementsScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(state.donors) { donor ->
-                        val donations = state.selectedDonorDonations.filter {
-                            it.donorId == donor.donorId
-                        }
-                        val totalAmount = donations.sumOf { it.checkAmount }
+                        // Calculate total for this donor for the selected year
+                        val donationsForYear = state.selectedDonorDonations.filter { it.donorId == donor.donorId }
+                        val totalAmount = donationsForYear.sumOf { it.checkAmount }
+
                         Card(
                             Modifier
                                 .fillMaxWidth()
-                                .clickable { vm.onDonorSelected(donor.donorId) }
+                                .clickable(enabled = state.selectedYear != null) { // Only clickable if a year is selected
+                                    vm.onDonorSelected(donor.donorId)
+                                }
                         ) {
                             Column(Modifier.padding(16.dp)) {
                                 Text(
                                     "${donor.firstName} ${donor.lastName}",
                                     style = MaterialTheme.typography.titleMedium
                                 )
-                                Text("Donations: ${donations.size}")
-                                Text("Total: $${"%.2f".format(totalAmount)}")
+                                // Show amounts only when a year is selected
+                                if (state.selectedYear != null) {
+                                    Text("Donations: ${donationsForYear.size}")
+                                    Text("Total for ${state.selectedYear}: $${"%.2f".format(totalAmount)}")
+                                }
                             }
                         }
                     }
@@ -129,19 +136,16 @@ fun YearlyStatementsScreen(
         }
     }
 
+    // Show the preview dialog only when there are donations for the selected donor
     if (state.selectedDonorDonations.isNotEmpty()) {
-        // Find the donor name from the selected donations
-        val selectedDonor = state.donors.find {
-            it.donorId == state.selectedDonorDonations.first().donorId
-        }
-        val donorName = selectedDonor?.let {
-            "${it.firstName} ${it.lastName}"
-        } ?: "Unknown Donor"
+        val selectedDonor = state.donors.find { it.donorId == state.selectedDonorId }
+        val donorName = selectedDonor?.let { "${it.firstName} ${it.lastName}" } ?: "Unknown Donor"
 
         StatementPreviewDialog(
             donations = state.selectedDonorDonations,
             donorName = donorName,
-            onDismiss = { vm.onDonorSelected(0) },
+            year = state.selectedYear ?: "N/A",
+            onDismiss = { vm.onDonorSelected(null) }, // Clear selection on dismiss
             onPrint = {
                 val file = printYearlyStatement(context, donorName, state.selectedDonorDonations)
                 openPdf(context, file)
@@ -154,6 +158,7 @@ fun YearlyStatementsScreen(
 fun StatementPreviewDialog(
     donations: List<Donation>,
     donorName: String,
+    year: String,
     onDismiss: () -> Unit,
     onPrint: () -> Unit
 ) {
@@ -161,11 +166,37 @@ fun StatementPreviewDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Statement Preview - $donorName") },
+        title = { Text("Statement Preview - $donorName ($year)") },
         text = {
             LazyColumn {
-                items(donations) { donation ->
-                    Text("Date: ${dateFormat.format(Date(donation.checkDate))}, Amount: $${"%.2f".format(donation.checkAmount)}")
+                // Header
+                item {
+                    Row(Modifier.fillMaxWidth()) {
+                        Text("Date", Modifier.weight(1f))
+                        Text("Check #", Modifier.weight(1f))
+                        Text("Amount", Modifier.weight(1f))
+                    }
+                }
+                // List of donations
+                items(donations.sortedBy { it.checkDate }) { donation ->
+                    Row(Modifier.fillMaxWidth()) {
+                        Text(dateFormat.format(Date(donation.checkDate)), Modifier.weight(1f))
+                        Text(donation.checkNumber, Modifier.weight(1f))
+                        Text("$${"%.2f".format(donation.checkAmount)}", Modifier.weight(1f))
+                    }
+                }
+                // Footer with totals
+                item {
+                    val totalAmount = donations.sumOf { it.checkAmount }
+                    Text(
+                        "Total Donations: ${donations.size}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                    Text(
+                        "Total Amount: $${"%.2f".format(totalAmount)}",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
                 }
             }
         },
