@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,11 +21,21 @@ import com.gracechurch.gracefulgiving.app.navigation.Routes
 
 @Composable
 fun AppDrawerContent(navController: NavController, closeDrawer: () -> Unit) {
-    Text("Menu", modifier = Modifier.padding(16.dp))
+    Text(
+        "Menu",
+        modifier = Modifier.padding(16.dp),
+        style = MaterialTheme.typography.headlineSmall.copy(
+            fontSize = MaterialTheme.typography.headlineSmall.fontSize * 1.7f
+        )
+    )
     Spacer(modifier = Modifier.height(16.dp))
 
+    val itemTextStyle = MaterialTheme.typography.labelLarge.copy(
+        fontSize = MaterialTheme.typography.labelLarge.fontSize * 1.7f
+    )
+
     NavigationDrawerItem(
-        label = { Text("Dashboard") },
+        label = { Text("Dashboard", style = itemTextStyle) },
         icon = { Icon(Icons.Default.Dashboard, contentDescription = "Dashboard") },
         selected = false,
         onClick = {
@@ -34,7 +45,7 @@ fun AppDrawerContent(navController: NavController, closeDrawer: () -> Unit) {
     )
 
     NavigationDrawerItem(
-        label = { Text("Batches") },
+        label = { Text("Batches", style = itemTextStyle) },
         icon = { Icon(Icons.Default.List, contentDescription = "Batches") },
         selected = false,
         onClick = {
@@ -44,7 +55,7 @@ fun AppDrawerContent(navController: NavController, closeDrawer: () -> Unit) {
     )
 
     NavigationDrawerItem(
-        label = { Text("Donors") },
+        label = { Text("Donors", style = itemTextStyle) },
         icon = { Icon(Icons.Default.Person, contentDescription = "Donors") },
         selected = false,
         onClick = {
@@ -54,7 +65,7 @@ fun AppDrawerContent(navController: NavController, closeDrawer: () -> Unit) {
     )
 
     NavigationDrawerItem(
-        label = { Text("Banks") },
+        label = { Text("Banks", style = itemTextStyle) },
         icon = { Icon(Icons.Default.AccountBalance, contentDescription = "Banks") },
         selected = false,
         onClick = {
@@ -64,7 +75,7 @@ fun AppDrawerContent(navController: NavController, closeDrawer: () -> Unit) {
     )
 
     NavigationDrawerItem(
-        label = { Text("Giving") },
+        label = { Text("Giving", style = itemTextStyle) },
         icon = { Icon(Icons.Default.CreditCard, contentDescription = "Giving") },
         selected = false,
         onClick = {
