@@ -9,6 +9,9 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.gracechurch.gracefulgiving.domain.repository.DonationRepository
 import com.gracechurch.gracefulgiving.domain.repository.BatchRepository
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
@@ -27,12 +30,60 @@ class DashboardViewModel @Inject constructor(
         val qtd = donationRepository.getQuarterToDateTotal()
         val ytd = donationRepository.getYearToDateTotal()
 
+        // Calculate last 12 months totals
+        val last12Months = getLast12MonthsTotals()
+        val monthLabels = getMonthLabels()
+
         _uiState.value = DashboardUiState(
             openBatches = openBatches,
             monthToDateTotal = mtd,
             quarterToDateTotal = qtd,
-            yearToDateTotal = ytd
+            yearToDateTotal = ytd,
+            last12MonthsTotals = last12Months,
+            oldestMonthLabel = monthLabels.first,
+            currentMonthLabel = monthLabels.second
         )
+    }
+
+    private suspend fun getLast12MonthsTotals(): List<Double> {
+        val calendar = Calendar.getInstance()
+
+        return (11 downTo 0).map { monthsAgo ->
+            calendar.timeInMillis = System.currentTimeMillis()
+            calendar.add(Calendar.MONTH, -monthsAgo)
+
+            // First day of month
+            val startOfMonth = calendar.apply {
+                set(Calendar.DAY_OF_MONTH, 1)
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+
+            // Last day of month
+            val endOfMonth = calendar.apply {
+                set(Calendar.DAY_OF_MONTH, getActualMaximum(Calendar.DAY_OF_MONTH))
+                set(Calendar.HOUR_OF_DAY, 23)
+                set(Calendar.MINUTE, 59)
+                set(Calendar.SECOND, 59)
+                set(Calendar.MILLISECOND, 999)
+            }.timeInMillis
+
+            donationRepository.getTotalBetweenDates(startOfMonth, endOfMonth)
+        }
+    }
+
+    private fun getMonthLabels(): Pair<String, String> {
+        val calendar = Calendar.getInstance()
+        val format = SimpleDateFormat("MMM ''yy", Locale.getDefault())
+
+        val currentMonth = format.format(calendar.time)
+
+        calendar.add(Calendar.MONTH, -11)
+        val oldestMonth = format.format(calendar.time)
+
+        return Pair(oldestMonth, currentMonth)
     }
 }
 
@@ -40,7 +91,10 @@ data class DashboardUiState(
     val openBatches: List<BatchInfo> = emptyList(),
     val monthToDateTotal: Double = 0.0,
     val quarterToDateTotal: Double = 0.0,
-    val yearToDateTotal: Double = 0.0
+    val yearToDateTotal: Double = 0.0,
+    val last12MonthsTotals: List<Double> = emptyList(),
+    val oldestMonthLabel: String = "",
+    val currentMonthLabel: String = ""
 )
 
 data class BatchInfo(

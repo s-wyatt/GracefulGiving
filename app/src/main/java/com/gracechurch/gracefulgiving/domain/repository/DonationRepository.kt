@@ -25,4 +25,5 @@ interface DonationRepository {
     suspend fun getMonthToDateTotal(): Double
     suspend fun getQuarterToDateTotal(): Double
     suspend fun getYearToDateTotal(): Double
+    suspend fun getTotalBetweenDates(startDate: Long, endDate: Long): Double
 }

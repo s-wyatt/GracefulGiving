@@ -25,6 +25,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
@@ -36,7 +37,7 @@ import java.util.concurrent.Executors
 @Composable
 fun CheckScannerScreen(onDismiss: () -> Unit, onScanComplete: (ScannedCheckData) -> Unit) {
     val ctx = LocalContext.current
-    val lifecycle = LocalLifecycleOwner.current
+    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current
     var permissionState by remember { mutableStateOf<PermissionState>(PermissionState.CHECKING) }
     var isProcessing by remember { mutableStateOf(false) }
     var imageCapture by remember { mutableStateOf<ImageCapture?>(null) }
@@ -159,7 +160,7 @@ fun CheckScannerScreen(onDismiss: () -> Unit, onScanComplete: (ScannedCheckData)
                                 capture.takePicture(
                                     cameraExecutor,
                                     object : ImageCapture.OnImageCapturedCallback() {
-                                        @OptIn(ExperimentalGetImage::class)
+                                        @androidx.annotation.OptIn(ExperimentalGetImage::class)
                                         override fun onCaptureSuccess(imageProxy: ImageProxy) {
                                             processCheckImage(imageProxy) { scannedData ->
                                                 isProcessing = false

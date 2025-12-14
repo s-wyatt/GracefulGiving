@@ -33,4 +33,6 @@ interface DonationDao {
 
     @Query("SELECT SUM(checkAmount) FROM donations WHERE checkDate >= :since")
     suspend fun getTotalDonationsSince(since: Long): Double?
+    @Query("SELECT SUM(checkAmount) FROM donations WHERE checkDate >= :startDate AND checkDate <= :endDate")
+    suspend fun getTotalBetweenDates(startDate: Long, endDate: Long): Double?
 }

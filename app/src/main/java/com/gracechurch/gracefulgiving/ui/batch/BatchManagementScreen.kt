@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
@@ -163,18 +164,32 @@ fun BatchCard(
     onPrint: () -> Unit
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onEdit)
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text("Batch #${batchWithDonations.batch.batchNumber}")
-            Text("Donations: ${batchWithDonations.donations.size}")
-            Text("Total: $${batchWithDonations.donations.sumOf { it.donation.checkAmount }}")
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(onClick = onEdit)
+                    .padding(end = 8.dp)
+            ) {
+                Text("Batch #${batchWithDonations.batch.batchNumber}")
+                Text("Donations: ${batchWithDonations.donations.size}")
+                Text("Total: $${"%.2f".format(batchWithDonations.donations.sumOf { it.donation.checkAmount })}")
+            }
+
+            Button(onClick = onPrint) {
+                Text("Print")
+            }
         }
     }
 }
-
 @Composable
 fun SortingMenu(sortType: SortType, setSortType: (SortType) -> Unit) {
 

@@ -101,6 +101,9 @@ class DonationRepositoryImpl @Inject constructor(
         val firstDayOfYear = cal.apply { set(Calendar.DAY_OF_YEAR, 1) }.timeInMillis
         return donationDao.getTotalDonationsSince(firstDayOfYear) ?: 0.0
     }
+    override suspend fun getTotalBetweenDates(startDate: Long, endDate: Long): Double {
+        return donationDao.getTotalBetweenDates(startDate, endDate) ?: 0.0
+    }
 
     /**
      * Private helper function to map a DonationEntity from the data layer
