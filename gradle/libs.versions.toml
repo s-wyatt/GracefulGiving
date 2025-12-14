@@ -8,7 +8,8 @@ activity-compose = "1.9.2"
 room = "2.6.1"
 hilt = "2.48"
 navigation = "2.7.7"
-material3 = "1.4.0"
+# GENTLE FIX: Removed the specific material3 version to let the BOM manage it.
+# material3 = "1.4.0"
 compose-material-icons = "1.6.0"
 camerax = "1.4.0"
 mlkit-text-recognition = "16.0.1"
@@ -38,7 +39,8 @@ compose-ui = { group = "androidx.compose.ui", name = "ui" }
 compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
 compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
-compose-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+# GENTLE FIX: This will now correctly use the version from the BOM.
+compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "compose-material-icons" }
 
 # Room
@@ -63,4 +65,3 @@ mlkit-text-recognition = { group = "com.google.mlkit", name = "text-recognition"
 # Note: The foundation-layout library is no longer needed
 # as it's managed by the Compose BOM.
 # androidx-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundation-layout" }
-

@@ -29,11 +29,12 @@ class BatchSelectionViewModel @Inject constructor(
         }
     }
 
-    fun createNewBatch(userId: Long, onCreated: (Long) -> Unit) {
+    // GENTLE FIX: Update the function to accept the selected date.
+    fun createNewBatch(userId: Long, createdOn: Long, onCreated: (Long) -> Unit) {
         viewModelScope.launch {
             try {
-                val batchNumber = System.currentTimeMillis()
-                val batchId = batchRepo.createBatch(batchNumber, userId)
+                // Now pass both parameters to the repository function.
+                val batchId = batchRepo.createBatch(userId, createdOn)
                 onCreated(batchId)
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = e.message) }

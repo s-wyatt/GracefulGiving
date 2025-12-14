@@ -3,9 +3,12 @@ package com.gracechurch.gracefulgiving.ui.bank
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gracechurch.gracefulgiving.data.local.entity.BankSettingsEntity
-import com.gracechurch.gracefulgiving.data.repository.BankSettingsRepository
+import com.gracechurch.gracefulgiving.domain.repository.BankSettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -18,63 +21,59 @@ class BankSettingsViewModel @Inject constructor(
     val uiState = _uiState.asStateFlow()
 
     init {
-        loadBankSettings()
+        loadSettings()
     }
 
-    private fun loadBankSettings() {
+    private fun loadSettings() {
         viewModelScope.launch {
-            repository.getBankSettings().collect { settings ->
-                _uiState.update { it.copy(settings = settings) }
-            }
-        }
-    }
-
-    fun saveBankSettings(
-        bankName: String,
-        accountName: String,
-        accountNumber: String,
-        routingNumber: String
-    ) {
-        viewModelScope.launch {
-            try {
-                repository.saveBankSettings(
-                    bankName = bankName.trim(),
-                    accountName = accountName.trim(),
-                    accountNumber = accountNumber.trim(),
-                    routingNumber = routingNumber.trim()
-                )
+            repository.getBankSettings().collect { settingsFromDb ->
+                val settings = settingsFromDb ?: BankSettingsEntity()
                 _uiState.update {
                     it.copy(
-                        successMessage = "Bank settings saved successfully",
-                        error = null
-                    )
-                }
-
-                // Clear success message after 3 seconds
-                kotlinx.coroutines.delay(3000)
-                _uiState.update { it.copy(successMessage = null) }
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        error = "Failed to save settings: ${e.message}",
-                        successMessage = null
+                        settings = settings,
+                        originalSettings = settings,
+                        isEditing = false
                     )
                 }
             }
         }
     }
 
-    fun clearError() {
-        _uiState.update { it.copy(error = null) }
+    fun onEdit() {
+        _uiState.update { it.copy(isEditing = true) }
     }
 
-    fun clearSuccessMessage() {
-        _uiState.update { it.copy(successMessage = null) }
+    fun onCancel() {
+        _uiState.update {
+            it.copy(
+                settings = it.originalSettings ?: BankSettingsEntity(),
+                isEditing = false
+            )
+        }
+    }
+
+    fun onSave() {
+        viewModelScope.launch {
+            repository.saveBankSettings(_uiState.value.settings)
+            // Flow collection in loadSettings will update state and turn off edit mode
+        }
+    }
+
+    fun onBankNameChanged(name: String) {
+        _uiState.update { it.copy(settings = it.settings.copy(bankName = name)) }
+    }
+
+    fun onAccountNameChanged(name: String) {
+        _uiState.update { it.copy(settings = it.settings.copy(accountName = name)) }
+    }
+
+    fun onAccountNumberChanged(number: String) {
+        _uiState.update { it.copy(settings = it.settings.copy(accountNumber = number)) }
     }
 }
 
 data class BankSettingsUiState(
-    val settings: BankSettingsEntity? = null,
-    val error: String? = null,
-    val successMessage: String? = null
+    val settings: BankSettingsEntity = BankSettingsEntity(),
+    val originalSettings: BankSettingsEntity? = null,
+    val isEditing: Boolean = false
 )

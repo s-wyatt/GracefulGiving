@@ -2,69 +2,84 @@ package com.gracechurch.gracefulgiving.ui.batch
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.gracechurch.gracefulgiving.data.local.entity.BankSettingsEntity
+import com.gracechurch.gracefulgiving.data.local.entity.DonationEntity
 import com.gracechurch.gracefulgiving.data.local.relations.BatchWithDonations
+import com.gracechurch.gracefulgiving.domain.model.ScannedCheckData
+import com.gracechurch.gracefulgiving.domain.repository.BankSettingsRepository
 import com.gracechurch.gracefulgiving.domain.repository.BatchRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class BatchManagementViewModel @Inject constructor(
-    private val batchRepo: BatchRepository
+class BatchEntryViewModel @Inject constructor(
+    private val batchRepository: BatchRepository,
+    private val bankSettingsRepository: BankSettingsRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(BatchManagementUiState())
+    private val _uiState = MutableStateFlow(BatchEntryUiState())
     val uiState = _uiState.asStateFlow()
 
-    // This is the function where your code snippet belongs
-    fun loadBatches() {
+    fun loadBatch(batchId: Long) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            // The logic to collect the flow from the repository
-            batchRepo.getAllBatches().collect { batches ->
-                _uiState.update {
-                    it.copy(
-                        batches = batches,
-                        isLoading = false,
-                        error = null
-                    )
-                }
+            batchRepository.getBatch(batchId).collect { batch ->
+                _uiState.update { it.copy(batchWithDonations = batch) }
+            }
+        }
+        viewModelScope.launch {
+            bankSettingsRepository.getBankSettings().collect { settings ->
+                _uiState.update { it.copy(bankSettings = settings) }
             }
         }
     }
 
-    fun createNewBatch(userId: Long, onBatchCreated: (Long) -> Unit) {
+    fun addDonation(
+        firstName: String,
+        lastName: String,
+        checkNumber: String,
+        amount: Double,
+        date: Long,
+        image: String?,
+        batchId: Long
+    ) {
         viewModelScope.launch {
-            val newBatchId = batchRepo.createBatch(userId)
-            if (newBatchId > 0) {
-                onBatchCreated(newBatchId)
-            } else {
-                _uiState.update { it.copy(error = "Failed to create new batch.") }
-            }
+            batchRepository.addDonation(firstName, lastName, checkNumber, amount, date, image, batchId)
         }
     }
 
-    fun deleteBatch(batchId: Long) {
+    fun deleteDonation(donationId: Long) {
         viewModelScope.launch {
-            batchRepo.deleteBatch(batchId)
-            // The flow will automatically update the list
+            batchRepository.deleteDonation(donationId)
         }
     }
 
-    // You would add functions for sorting and filtering here
-    fun setSortType(sortType: String) { /* TODO */ }
-    fun setFilterType(filterType: String) { /* TODO */ }
-    fun printBatchReport(batchId: Long) { /* TODO */ }
-    fun printDepositSlip(batchId: Long) { /* TODO */ }
+    fun updateDonation(donation: DonationEntity) {
+        viewModelScope.launch {
+            batchRepository.updateDonation(donation)
+        }
+    }
+
+    fun setScannedData(data: ScannedCheckData) {
+        _uiState.update { it.copy(scannedData = data) }
+    }
+
+    fun clearScannedData() {
+        _uiState.update { it.copy(scannedData = null) }
+    }
+
+    fun closeBatch(batchId: Long) {
+        viewModelScope.launch {
+            batchRepository.closeBatch(batchId)
+        }
+    }
 }
 
-// UI State for the Batch Management screen
-data class BatchManagementUiState(
-    val batches: List<BatchWithDonations> = emptyList(),
-    val isLoading: Boolean = false,
-    val error: String? = null,
-    val sortType: String = "Date", // Example property
-    val filterType: String = "All", // Example property
-    val filteredAndSorted: List<BatchWithDonations> = emptyList() // Example property
+data class BatchEntryUiState(
+    val batchWithDonations: BatchWithDonations? = null,
+    val scannedData: ScannedCheckData? = null,
+    val bankSettings: BankSettingsEntity? = null
 )

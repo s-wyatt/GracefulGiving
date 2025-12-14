@@ -9,6 +9,5 @@ data class BankSettingsEntity(
     val bankName: String = "",
     val accountName: String = "",
     val accountNumber: String = "",
-    val routingNumber: String = "",
     val updatedAt: Long = System.currentTimeMillis()
 )

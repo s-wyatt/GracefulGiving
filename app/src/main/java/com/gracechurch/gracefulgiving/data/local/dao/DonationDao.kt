@@ -1,43 +1,36 @@
 package com.gracechurch.gracefulgiving.data.local.dao
-import androidx.room.*
+
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Update
 import com.gracechurch.gracefulgiving.data.local.entity.DonationEntity
-import com.gracechurch.gracefulgiving.data.local.relations.DonationWithDonor
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface DonationDao {
-    @Transaction // <-- @Transaction is crucial for relationship queries
-    @Query("SELECT * FROM donations WHERE donationId = :donationId")
-    suspend fun getDonationWithDonor(donationId: Long): DonationWithDonor?
-
-    @Query("SELECT * FROM donations WHERE batchId = :batchId")
-    fun getDonationsByBatch(batchId: Long): Flow<List<DonationEntity>>
-
-    @Query("SELECT * FROM donations WHERE donorId = :donorId AND checkDate >= :startDate AND checkDate <= :endDate")
-    fun getDonationsByDonorAndDateRange(donorId: Long, startDate: Long, endDate: Long): Flow<List<DonationEntity>>
-
-    @Query("SELECT SUM(checkAmount) FROM donations WHERE batchId = :batchId")
-    suspend fun getBatchTotal(batchId: Long): Double?
-    @Transaction
-    @Query("SELECT * FROM donations WHERE donorId = :donorId AND checkDate BETWEEN :startDate AND :endDate")
-    suspend fun getDonationsForDonorInYear(donorId: Long, startDate: Long, endDate: Long): List<DonationWithDonor>
-
-    @Transaction
-    @Query("SELECT * FROM donations WHERE batchId = :batchId")
-    suspend fun getDonationsForBatch(batchId: Long): List<DonationWithDonor>
-
     @Query("SELECT * FROM donations ORDER BY checkDate DESC")
     fun getAllDonations(): Flow<List<DonationEntity>>
+
+    @Query("SELECT * FROM donations WHERE donationId = :donationId")
+    fun getDonationById(donationId: Long): Flow<DonationEntity?>
+
+    @Query("SELECT * FROM donations WHERE batchId = :batchId ORDER BY checkDate DESC")
+    fun getDonationsByBatch(batchId: Long): Flow<List<DonationEntity>>
+
+    @Query("SELECT * FROM donations WHERE donorId = :donorId ORDER BY checkDate DESC")
+    fun getDonationsByDonor(donorId: Long): Flow<List<DonationEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertDonation(donation: DonationEntity): Long
 
-
-    @Query("SELECT SUM(checkAmount) FROM donations WHERE checkDate >= :sinceDate")
-    suspend fun getTotalDonationsSince(sinceDate: Long): Double?
     @Update
     suspend fun updateDonation(donation: DonationEntity)
 
-    @Delete
-    suspend fun deleteDonation(donation: DonationEntity)
+    @Query("DELETE FROM donations WHERE donationId = :donationId")
+    suspend fun deleteDonationById(donationId: Long)
+
+    @Query("SELECT SUM(checkAmount) FROM donations WHERE checkDate >= :since")
+    suspend fun getTotalDonationsSince(since: Long): Double?
 }

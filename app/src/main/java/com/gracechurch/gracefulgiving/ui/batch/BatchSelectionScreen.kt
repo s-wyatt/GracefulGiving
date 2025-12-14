@@ -46,7 +46,7 @@ fun BatchSelectionScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    vm.createNewBatch(userId) { batchId ->
+                    vm.createNewBatch(userId, System.currentTimeMillis()) { batchId ->
                         onNavigateToBatchEntry(batchId)
                     }
                 }

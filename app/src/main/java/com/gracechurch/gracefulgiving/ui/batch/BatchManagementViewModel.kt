@@ -1,131 +1,98 @@
 package com.gracechurch.gracefulgiving.ui.batch
 
-import androidx.compose.ui.geometry.isEmpty
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gracechurch.gracefulgiving.data.local.relations.BatchWithDonations
 import com.gracechurch.gracefulgiving.domain.repository.BatchRepository
+import com.gracechurch.gracefulgiving.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class BatchManagementViewModel @Inject constructor(
-    private val repo: BatchRepository
+    private val repository: BatchRepository,
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BatchManagementUiState())
-    val uiState: StateFlow<BatchManagementUiState> = _uiState
+    val uiState = _uiState.asStateFlow()
 
-    // Keep track of sort and filter types internally
-    private val _sortType = MutableStateFlow(SortType.DATE_NEWEST)
-    private val _filterType = MutableStateFlow(FilterType.ALL)
-
-    init {
-        // GENTLE FIX: Collect the flow of batches reactively.
-        // This will automatically update whenever the data changes.
+    fun loadBatches() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-
-            // Combine the batches flow with sort/filter flows
-            combine(repo.getAllBatches(), _sortType, _filterType) { batches, sort, filter ->
-                applyFiltersAndSorting(batches, sort, filter)
-            }.collect { filteredAndSortedBatches ->
-                _uiState.update { state ->
-                    state.copy(
-                        isLoading = false,
-                        // Update the raw list and the filtered/sorted list
-                        batches = filteredAndSortedBatches,
-                        filteredAndSorted = filteredAndSortedBatches,
-                        sortType = _sortType.value,
-                        filterType = _filterType.value
-                    )
-                }
+            repository.getAllBatches().collect { batches ->
+                _uiState.update { it.copy(batches = batches, isLoading = false) }
             }
         }
     }
 
-    // loadBatches() is no longer needed, as the init block handles it.
-
-    fun createNewBatch(userId: Long, navigate: (Long) -> Unit) {
+    fun createNewBatch(userId: Long, createdOn: Long, onBatchCreated: (Long) -> Unit) {
         viewModelScope.launch {
-            val id = repo.createBatch(userId)
-            navigate(id)
+            val newBatchId = repository.createBatch(userId, createdOn)
+            onBatchCreated(newBatchId)
         }
     }
 
-    fun deleteBatch(batchId: Long) {
+    fun deleteBatch(batchId: Long, userId: Long) {
         viewModelScope.launch {
-            repo.deleteBatch(batchId)
-            // No need to call loadBatches()! The Flow will automatically update the UI.
+            val user = userRepository.getUserById(userId)
+            val batch = repository.getBatch(batchId).first()
+            if (batch?.batch?.status == "closed" && user?.role?.name != "ADMIN") {
+                // Show error message
+                return@launch
+            }
+            repository.deleteBatch(batchId)
         }
+    }
+
+    fun setSortType(sortType: SortType) {
+        _uiState.update { it.copy(sortType = sortType) }
+    }
+
+    fun setFilterType(filterType: FilterType) {
+        _uiState.update { it.copy(filterType = filterType) }
     }
 
     fun printBatchReport(batchId: Long) {
-        viewModelScope.launch { repo.generateBatchReport(batchId) }
+        // TODO: Implement printing logic
     }
 
     fun printDepositSlip(batchId: Long) {
-        viewModelScope.launch { repo.generateDepositSlip(batchId) }
-    }
-
-    fun setSortType(type: SortType) {
-        _sortType.value = type
-        // The `combine` operator in the init block will automatically re-trigger.
-    }
-
-    fun setFilterType(type: FilterType) {
-        _filterType.value = type
-        // The `combine` operator in the init block will also re-trigger.
-    }
-
-    private fun applyFiltersAndSorting(
-        list: List<BatchWithDonations>,
-        sort: SortType,
-        filter: FilterType
-    ): List<BatchWithDonations> {
-        var out = list
-
-        // Filtering
-        out = when (filter) {
-            FilterType.ALL -> out
-            FilterType.EMPTY -> out.filter { it.donations.isEmpty() }
-            FilterType.NON_EMPTY -> out.filter { it.donations.isNotEmpty() }
-        }
-
-        // Sorting
-        out = when (sort) {
-            SortType.DATE_NEWEST -> out.sortedByDescending { it.batch.createdOn }
-            SortType.DATE_OLDEST -> out.sortedBy { it.batch.createdOn }
-            SortType.TOTAL_ASC -> out.sortedBy { it.donations.sumOf { d -> d.donation.checkAmount } }
-            SortType.TOTAL_DESC -> out.sortedByDescending { it.donations.sumOf { d -> d.donation.checkAmount } }
-        }
-
-        return out
+        // TODO: Implement printing logic
     }
 }
 
-// ------------------------------ UI STATE MODEL ------------------------------
 data class BatchManagementUiState(
-    val isLoading: Boolean = false,
     val batches: List<BatchWithDonations> = emptyList(),
-    val filteredAndSorted: List<BatchWithDonations> = emptyList(),
-    val sortType: SortType = SortType.DATE_NEWEST,
-    val filterType: FilterType = FilterType.ALL
-)
-
-// ------------------------------ SORT & FILTER ENUMS ------------------------------
-enum class SortType(val label: String) {
-    DATE_NEWEST("Newest First"),
-    DATE_OLDEST("Oldest First"),
-    TOTAL_ASC("Total Amount Asc"),
-    TOTAL_DESC("Total Amount Desc")
+    val isLoading: Boolean = true,
+    val sortType: SortType = SortType.DateDescending,
+    val filterType: FilterType = FilterType.All
+) {
+    val filteredAndSorted: List<BatchWithDonations>
+        get() = batches
+            .filter { filterType.matches(it) }
+            .sortedWith(sortType.comparator)
 }
 
-enum class FilterType(val label: String) {
-    ALL("All Batches"),
-    EMPTY("Empty Only"),
-    NON_EMPTY("With Donations")
+
+enum class SortType(val comparator: Comparator<BatchWithDonations>) {
+    DateDescending(compareByDescending { it.batch.createdOn }),
+    DateAscending(compareBy { it.batch.createdOn }),
+    AmountDescending(compareByDescending { it.donations.sumOf { d -> d.donation.checkAmount } }),
+    AmountAscending(compareBy { it.donations.sumOf { d -> d.donation.checkAmount } })
 }
 
+enum class FilterType {
+    All,
+    Open,
+    Closed;
+
+    fun matches(batch: BatchWithDonations): Boolean {
+        // TODO: Implement filter logic based on batch status
+        return true
+    }
+}

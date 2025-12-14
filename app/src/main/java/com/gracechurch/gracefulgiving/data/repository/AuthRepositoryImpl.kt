@@ -12,7 +12,16 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun login(username: String, password: String): Result<User> {
         val userEntity = userDao.getUserByUsername(username)
         return if (userEntity != null && userEntity.passwordHash == password.hashCode().toString()) {
-            Result.success(User(userEntity.id, userEntity.username, userEntity.role))
+            Result.success(
+                User(
+                    id = userEntity.id,
+                    username = userEntity.username,
+                    email = userEntity.email,
+                    role = userEntity.role,
+                    isTemp = userEntity.isTemp,
+                    createdAt = userEntity.createdAt
+                )
+            )
         } else {
             Result.failure(Exception("Invalid username or password"))
         }

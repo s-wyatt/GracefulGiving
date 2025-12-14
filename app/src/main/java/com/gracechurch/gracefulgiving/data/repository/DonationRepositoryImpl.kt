@@ -2,22 +2,36 @@ package com.gracechurch.gracefulgiving.data.repository
 
 import com.gracechurch.gracefulgiving.data.local.dao.CheckImageDao
 import com.gracechurch.gracefulgiving.data.local.dao.DonationDao
-import com.gracechurch.gracefulgiving.data.local.dao.DonorDao // <-- Import DonorDao
+import com.gracechurch.gracefulgiving.data.local.dao.DonorDao
 import com.gracechurch.gracefulgiving.data.local.entity.CheckImageEntity
 import com.gracechurch.gracefulgiving.data.local.entity.DonationEntity
 import com.gracechurch.gracefulgiving.data.local.entity.DonorEntity
+import com.gracechurch.gracefulgiving.domain.model.Donation
 import com.gracechurch.gracefulgiving.domain.repository.DonationRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import java.util.Calendar
 import javax.inject.Inject
 
-// GENTLE FIX: Inject all necessary DAOs
 class DonationRepositoryImpl @Inject constructor(
     private val donationDao: DonationDao,
-    private val donorDao: DonorDao, // <-- Add DonorDao
-    private val checkImageDao: CheckImageDao // <-- Add CheckImageDao
+    private val donorDao: DonorDao,
+    private val checkImageDao: CheckImageDao
 ) : DonationRepository {
 
-    // GENTLE FIX: Move the addDonation logic here from BatchRepositoryImpl
+    override fun getAllDonations(): Flow<List<Donation>> {
+        return donationDao.getAllDonations().map { entities ->
+            entities.map { mapEntityToDomain(it) }
+        }
+    }
+
+    override fun getDonationsByDonor(donorId: Long): Flow<List<Donation>> {
+        return donationDao.getDonationsByDonor(donorId).map { entities ->
+            entities.map { mapEntityToDomain(it) }
+        }
+    }
+
     override suspend fun addDonation(
         firstName: String,
         lastName: String,
@@ -27,13 +41,11 @@ class DonationRepositoryImpl @Inject constructor(
         image: String?,
         batchId: Long
     ) {
-        // Find or create a donor using the correct DAO
-        // A real implementation should check if the donor exists first.
+        // A more robust implementation would check if a donor exists first.
         val donorId = donorDao.insertDonor(
             DonorEntity(firstName = firstName, lastName = lastName)
         )
 
-        // Insert the donation using the correct DAO
         val donationId = donationDao.insertDonation(
             DonationEntity(
                 donorId = donorId,
@@ -45,7 +57,6 @@ class DonationRepositoryImpl @Inject constructor(
             )
         )
 
-        // Insert the check image if it exists
         if (!image.isNullOrBlank()) {
             checkImageDao.insertCheckImage(
                 CheckImageEntity(
@@ -57,6 +68,14 @@ class DonationRepositoryImpl @Inject constructor(
                 )
             )
         }
+    }
+
+    override suspend fun deleteDonation(donationId: Long) {
+        donationDao.deleteDonationById(donationId)
+    }
+
+    override suspend fun updateDonation(donation: DonationEntity) {
+        donationDao.updateDonation(donation)
     }
 
     override suspend fun getMonthToDateTotal(): Double {
@@ -80,5 +99,20 @@ class DonationRepositoryImpl @Inject constructor(
         val cal = Calendar.getInstance()
         val firstDayOfYear = cal.apply { set(Calendar.DAY_OF_YEAR, 1) }.timeInMillis
         return donationDao.getTotalDonationsSince(firstDayOfYear) ?: 0.0
+    }
+
+    /**
+     * Private helper function to map a DonationEntity from the data layer
+     * to a Donation model for the domain/UI layer.
+     */
+    private fun mapEntityToDomain(donationEntity: DonationEntity): Donation {
+        return Donation(
+            donationId = donationEntity.donationId,
+            donorId = donationEntity.donorId,
+            checkAmount = donationEntity.checkAmount,
+            checkDate = donationEntity.checkDate,
+            checkNumber = donationEntity.checkNumber,
+            checkImage = donationEntity.checkImage
+        )
     }
 }

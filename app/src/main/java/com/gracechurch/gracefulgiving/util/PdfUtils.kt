@@ -9,27 +9,37 @@ import com.gracechurch.gracefulgiving.data.local.entity.BankSettingsEntity
 import com.gracechurch.gracefulgiving.data.local.relations.DonationWithDonor
 import java.io.File
 import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-fun printDepositReport(
+fun printDepositSlip(
     context: Context,
     bankSettings: BankSettingsEntity?,
-    donations: List<DonationWithDonor>
-) {
+    donations: List<DonationWithDonor>,
+    batchDate: Long
+): File {
     val pdfDocument = PdfDocument()
     val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
     val page = pdfDocument.startPage(pageInfo)
     val canvas = page.canvas
     val paint = Paint()
+    val sdf = SimpleDateFormat("MM/dd/yyyy", Locale.US)
 
     var y = 40f
     paint.textSize = 12f
 
+    canvas.drawText("Deposit Slip", 10f, y, paint)
+    y += 20
+    canvas.drawText("Batch Date: ${sdf.format(Date(batchDate))}", 10f, y, paint)
+    y += 40
+
     bankSettings?.let {
         canvas.drawText("Bank Name: ${it.bankName}", 10f, y, paint)
         y += 20
-        canvas.drawText("Account Number: ${it.accountNumber}", 10f, y, paint)
+        canvas.drawText("Account Name: ${it.accountName}", 10f, y, paint)
         y += 20
-        canvas.drawText("Routing Number: ${it.routingNumber}", 10f, y, paint)
+        canvas.drawText("Account Number: ${it.accountNumber}", 10f, y, paint)
         y += 40
     }
 
@@ -48,13 +58,14 @@ fun printDepositReport(
 
     pdfDocument.finishPage(page)
 
-    val file = File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "deposit_report.pdf")
+    val file = File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "deposit_slip.pdf")
     try {
         pdfDocument.writeTo(FileOutputStream(file))
-        Toast.makeText(context, "Deposit report saved to ${file.absolutePath}", Toast.LENGTH_LONG).show()
+        Toast.makeText(context, "Deposit slip saved to ${file.absolutePath}", Toast.LENGTH_LONG).show()
     } catch (e: Exception) {
         e.printStackTrace()
-        Toast.makeText(context, "Error saving deposit report", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "Error saving deposit slip", Toast.LENGTH_SHORT).show()
     }
     pdfDocument.close()
+    return file
 }

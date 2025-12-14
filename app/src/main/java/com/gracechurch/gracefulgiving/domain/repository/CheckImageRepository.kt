@@ -1,6 +1,5 @@
-package com.gracechurch.gracefulgiving.data.repository
+package com.gracechurch.gracefulgiving.domain.repository
 
-import androidx.room.PrimaryKey
 import com.gracechurch.gracefulgiving.data.local.dao.CheckImageDao
 import com.gracechurch.gracefulgiving.data.local.entity.CheckImageEntity
 import javax.inject.Inject

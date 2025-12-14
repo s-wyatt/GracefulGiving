@@ -10,27 +10,23 @@ import com.gracechurch.gracefulgiving.ui.batch.BatchEntryScreen
 import com.gracechurch.gracefulgiving.ui.bank.BankSettingsScreen
 import com.gracechurch.gracefulgiving.ui.batch.BatchManagementScreen
 import com.gracechurch.gracefulgiving.ui.dashboard.DashboardScreen
-import com.gracechurch.gracefulgiving.ui.donors.DonorsDonationsScreen
+import com.gracechurch.gracefulgiving.ui.donor.DonorsDonationsScreen
 import com.gracechurch.gracefulgiving.ui.statements.YearlyStatementsScreen
 
-// GENTLE FIX: The Routes object has been moved to its own file (Routes.kt)
-// and is no longer needed here.
-
 @Composable
-fun AppNavGraph(navController: NavHostController) {
+fun AppNavGraph(navController: NavHostController, userId: Long) {
     NavHost(navController = navController, startDestination = Routes.DASHBOARD) {
         composable(Routes.DASHBOARD) {
             DashboardScreen(navController)
         }
         composable(Routes.BATCH_MANAGEMENT) {
-            BatchManagementScreen(navController)
+            BatchManagementScreen(navController, userId)
         }
         composable(Routes.DONORS_DONATIONS) {
             DonorsDonationsScreen(navController)
         }
         composable(Routes.BANK_SETTINGS) {
-            // This now resolves correctly because of the added import
-            BankSettingsScreen(navController)
+            BankSettingsScreen()
         }
         composable(Routes.YEARLY_STATEMENTS) {
             YearlyStatementsScreen(navController)
@@ -43,8 +39,7 @@ fun AppNavGraph(navController: NavHostController) {
         ) { backStackEntry ->
             val batchId = backStackEntry.arguments?.getLong("batchId") ?: 0L
             BatchEntryScreen(
-                batchId = batchId,
-                onNavigateBack = { navController.popBackStack() }
+                batchId = batchId
             )
         }
     }

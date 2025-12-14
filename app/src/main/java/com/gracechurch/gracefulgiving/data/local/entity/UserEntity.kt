@@ -1,6 +1,7 @@
 package com.gracechurch.gracefulgiving.data.local.entity
-import android.R
-import androidx.room.*
+
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import com.gracechurch.gracefulgiving.domain.model.UserRole
 
 @Entity(tableName = "users")

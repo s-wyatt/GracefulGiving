@@ -1,11 +1,14 @@
 package com.gracechurch.gracefulgiving.domain.model
 
+/**
+ * Represents a single donation in the domain layer.
+ * This is the clean data model that the UI and ViewModels will interact with.
+ */
 data class Donation(
-    val id: Long = 0,
-    val batchId: Long,
+    val donationId: Long,
     val donorId: Long,
+    val checkAmount: Double,
     val checkDate: Long,
     val checkNumber: String,
-    val checkAmount: Double,
-    val createdAt: Long = System.currentTimeMillis()
+    val checkImage: String?
 )

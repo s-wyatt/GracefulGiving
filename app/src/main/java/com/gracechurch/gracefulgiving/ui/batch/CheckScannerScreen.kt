@@ -159,6 +159,7 @@ fun CheckScannerScreen(onDismiss: () -> Unit, onScanComplete: (ScannedCheckData)
                                 capture.takePicture(
                                     cameraExecutor,
                                     object : ImageCapture.OnImageCapturedCallback() {
+                                        @OptIn(ExperimentalGetImage::class)
                                         override fun onCaptureSuccess(imageProxy: ImageProxy) {
                                             processCheckImage(imageProxy) { scannedData ->
                                                 isProcessing = false
@@ -184,6 +185,7 @@ fun CheckScannerScreen(onDismiss: () -> Unit, onScanComplete: (ScannedCheckData)
     }
 }
 
+@androidx.camera.core.ExperimentalGetImage
 private fun processCheckImage(imageProxy: ImageProxy, onResult: (ScannedCheckData) -> Unit) {
     val mediaImage = imageProxy.image
     if (mediaImage != null) {
@@ -309,6 +311,7 @@ private fun bitmapToBase64(bitmap: Bitmap): String {
     return Base64.encodeToString(byteArray, Base64.DEFAULT)
 }
 
+@ExperimentalGetImage
 private fun ImageProxy.toBitmap(): Bitmap {
     val buffer = planes[0].buffer
     val bytes = ByteArray(buffer.remaining())

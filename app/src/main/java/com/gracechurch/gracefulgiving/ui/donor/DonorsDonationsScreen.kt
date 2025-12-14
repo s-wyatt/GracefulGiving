@@ -1,4 +1,4 @@
-package com.gracechurch.gracefulgiving.ui.donors
+package com.gracechurch.gracefulgiving.ui.donor
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -26,14 +26,14 @@ fun DonorsDonationsScreen(navController: NavController, viewModel: DonorsDonatio
 
         Text("Donors:")
         uiState.donors.forEach {
-            Text(it.name)
+            Text("${it.firstName} ${it.lastName}")
         }
 
         Spacer(Modifier.height(20.dp))
 
         Text("Donations:")
         uiState.donations.forEach {
-            Text("Donation ${it.id}: ${it.amount}")
+            Text("Donation ${it.donationId}: $${String.format("%.2f", it.checkAmount)}")
         }
     }
 }

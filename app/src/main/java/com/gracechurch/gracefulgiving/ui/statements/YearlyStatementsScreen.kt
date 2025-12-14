@@ -1,16 +1,48 @@
 package com.gracechurch.gracefulgiving.ui.statements
 
+import android.content.Context
+import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.gracechurch.gracefulgiving.app.navigation.Routes
+import com.gracechurch.gracefulgiving.domain.model.Donation
+import com.gracechurch.gracefulgiving.util.printYearlyStatement
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -19,10 +51,7 @@ fun YearlyStatementsScreen(
     vm: YearlyStatementsViewModel = hiltViewModel()
 ) {
     val state by vm.uiState.collectAsState()
-
-    LaunchedEffect(Unit) {
-        vm.loadDonors()
-    }
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -36,53 +65,131 @@ fun YearlyStatementsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            if (state.loading) {
+            var expanded by remember { mutableStateOf(false) }
+
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = !expanded }
+            ) {
+                OutlinedTextField(
+                    value = state.selectedYear ?: "",
+                    onValueChange = {},
+                    label = { Text("Year") },
+                    readOnly = true,
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    state.years.forEach { year ->
+                        DropdownMenuItem(
+                            text = { Text(year) },
+                            onClick = {
+                                vm.onYearSelected(year)
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            if (state.isLoading) {
                 CircularProgressIndicator()
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(state.donors) { donorWithDonations ->
+                    items(state.donors) { donor ->
+                        val donations = state.selectedDonorDonations.filter {
+                            it.donorId == donor.donorId
+                        }
+                        val totalAmount = donations.sumOf { it.checkAmount }
                         Card(
                             Modifier
                                 .fillMaxWidth()
-                                .clickable {
-                                    vm.generateYearlyStatement(donorWithDonations.donor.donorId)
-                                }
+                                .clickable { vm.onDonorSelected(donor.donorId) }
                         ) {
                             Column(Modifier.padding(16.dp)) {
                                 Text(
-                                    "${donorWithDonations.donor.firstName} ${donorWithDonations.donor.lastName}",
+                                    "${donor.firstName} ${donor.lastName}",
                                     style = MaterialTheme.typography.titleMedium
                                 )
-                                Text(
-                                    "${donorWithDonations.donations.size} donations",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                                Text(
-                                    "Tap to generate & print yearly statement",
-                                    style = MaterialTheme.typography.bodySmall
-                                )
+                                Text("Donations: ${donations.size}")
+                                Text("Total: $${"%.2f".format(totalAmount)}")
                             }
                         }
                     }
                 }
             }
+        }
+    }
 
-            state.error?.let { error ->
-                Text(error, color = MaterialTheme.colorScheme.error)
+    if (state.selectedDonorDonations.isNotEmpty()) {
+        // Find the donor name from the selected donations
+        val selectedDonor = state.donors.find {
+            it.donorId == state.selectedDonorDonations.first().donorId
+        }
+        val donorName = selectedDonor?.let {
+            "${it.firstName} ${it.lastName}"
+        } ?: "Unknown Donor"
+
+        StatementPreviewDialog(
+            donations = state.selectedDonorDonations,
+            donorName = donorName,
+            onDismiss = { vm.onDonorSelected(0) },
+            onPrint = {
+                val file = printYearlyStatement(context, donorName, state.selectedDonorDonations)
+                openPdf(context, file)
             }
+        )
+    }
+}
 
-            state.successMessage?.let { message ->
-                Text(message, color = MaterialTheme.colorScheme.primary)
+@Composable
+fun StatementPreviewDialog(
+    donations: List<Donation>,
+    donorName: String,
+    onDismiss: () -> Unit,
+    onPrint: () -> Unit
+) {
+    val dateFormat = SimpleDateFormat("MM/dd/yyyy", Locale.US)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Statement Preview - $donorName") },
+        text = {
+            LazyColumn {
+                items(donations) { donation ->
+                    Text("Date: ${dateFormat.format(Date(donation.checkDate))}, Amount: $${"%.2f".format(donation.checkAmount)}")
+                }
             }
-
-            Spacer(Modifier.height(20.dp))
-
-            Button(onClick = { navController.navigate(Routes.DASHBOARD) }) {
-                Text("Back to Dashboard")
+        },
+        confirmButton = {
+            Button(onClick = onPrint) {
+                Text("Print")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
             }
         }
+    )
+}
+
+fun openPdf(context: Context, file: File) {
+    val uri = FileProvider.getUriForFile(context, context.applicationContext.packageName + ".provider", file)
+    val intent = Intent(Intent.ACTION_VIEW)
+    intent.setDataAndType(uri, "application/pdf")
+    intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NO_HISTORY
+    try {
+        context.startActivity(intent)
+    } catch (e: android.content.ActivityNotFoundException) {
+        Toast.makeText(context, "No PDF viewer found", Toast.LENGTH_SHORT).show()
     }
 }

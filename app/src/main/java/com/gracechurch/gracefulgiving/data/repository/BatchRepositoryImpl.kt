@@ -1,23 +1,19 @@
 package com.gracechurch.gracefulgiving.data.repository
 
 import com.gracechurch.gracefulgiving.data.local.dao.BatchDao
-// import com.gracechurch.gracefulgiving.data.local.dao.CheckImageDao // No longer needed here
-// import com.gracechurch.gracefulgiving.data.local.entity.CheckImageEntity // No longer needed
-// import com.gracechurch.gracefulgiving.data.local.entity.DonationEntity // No longer needed
-// import com.gracechurch.gracefulgiving.data.local.entity.DonorEntity // No longer needed
 import com.gracechurch.gracefulgiving.data.local.entity.BatchEntity
+import com.gracechurch.gracefulgiving.data.local.entity.DonationEntity
 import com.gracechurch.gracefulgiving.data.local.relations.BatchWithDonations
 import com.gracechurch.gracefulgiving.domain.repository.BatchRepository
-import com.gracechurch.gracefulgiving.domain.repository.DonationRepository // <-- Import DonationRepository
+import com.gracechurch.gracefulgiving.domain.repository.DonationRepository
 import com.gracechurch.gracefulgiving.ui.dashboard.BatchInfo
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
-// GENTLE FIX: Simplify the constructor
 class BatchRepositoryImpl @Inject constructor(
     private val dao: BatchDao,
-    private val donationRepo: DonationRepository // <-- Inject the repository, not the DAOs
+    private val donationRepo: DonationRepository
 ) : BatchRepository {
 
     override fun getAllBatches(): Flow<List<BatchWithDonations>> =
@@ -26,13 +22,13 @@ class BatchRepositoryImpl @Inject constructor(
     override fun getBatch(id: Long): Flow<BatchWithDonations?> =
         dao.getBatchWithDonations(id)
 
-    override suspend fun createBatch(userId: Long): Long {
+    override suspend fun createBatch(userId: Long, createdOn: Long): Long {
         val nextBatchNumber = (dao.getMaxBatchNumber() ?: 0) + 1
         return dao.insertBatch(
             BatchEntity(
                 batchNumber = nextBatchNumber,
                 userId = userId,
-                createdOn = System.currentTimeMillis()
+                createdOn = createdOn
             )
         )
     }
@@ -41,7 +37,11 @@ class BatchRepositoryImpl @Inject constructor(
         dao.deleteBatch(batchId)
     }
 
-    // GENTLE FIX: Delegate the addDonation call to the DonationRepository
+    override suspend fun closeBatch(batchId: Long) {
+        dao.updateBatchStatus(batchId, "closed")
+    }
+
+    // Delegate the addDonation call to the DonationRepository
     override suspend fun addDonation(
         firstName: String,
         lastName: String,
@@ -52,6 +52,14 @@ class BatchRepositoryImpl @Inject constructor(
         batchId: Long
     ) {
         donationRepo.addDonation(firstName, lastName, checkNumber, amount, date, image, batchId)
+    }
+
+    override suspend fun deleteDonation(donationId: Long) {
+        donationRepo.deleteDonation(donationId)
+    }
+
+    override suspend fun updateDonation(donation: DonationEntity) {
+        donationRepo.updateDonation(donation)
     }
 
     override suspend fun getOpenBatches(): List<BatchInfo> {

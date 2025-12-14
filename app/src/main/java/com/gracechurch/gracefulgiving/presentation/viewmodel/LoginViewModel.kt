@@ -2,7 +2,7 @@ package com.gracechurch.gracefulgiving.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.gracechurch.gracefulgiving.data.repository.AuthRepository
+import com.gracechurch.gracefulgiving.domain.repository.AuthRepository
 import com.gracechurch.gracefulgiving.domain.model.User
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*

@@ -1,5 +1,11 @@
 package com.gracechurch.gracefulgiving.ui.batch
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,51 +18,56 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.gracechurch.gracefulgiving.app.navigation.Routes
 import com.gracechurch.gracefulgiving.data.local.relations.BatchWithDonations
+import com.gracechurch.gracefulgiving.util.printDepositSlip
+import java.io.File
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BatchManagementScreen(
-    // GENTLE FIX: Simplified parameters to only take NavController.
-    // The MainScaffold now handles the back button.
     navController: NavController,
+    userId: Long,
     vm: BatchManagementViewModel = hiltViewModel()
 ) {
     val state by vm.uiState.collectAsState()
     val batches = state.filteredAndSorted
-
-    // Assuming you'll get the userId from a shared ViewModel or similar in a real app.
-    // For now, let's hardcode it for the createNewBatch function.
-    val currentUserId = 1L // TODO: Replace with actual logged-in user ID
+    val context = LocalContext.current
+    var showDatePicker by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState()
 
     LaunchedEffect(Unit) { vm.loadBatches() }
 
     Scaffold(
-        // The TopAppBar is now managed by MainScaffold, so we remove it from here.
         floatingActionButton = {
             FloatingActionButton(
-                onClick = {
-                    // Create a new batch and then navigate to the entry screen
-                    vm.createNewBatch(currentUserId) { newBatchId ->
-                        navController.navigate("${Routes.BATCH_ENTRY}/$newBatchId")
-                    }
-                }
+                onClick = { showDatePicker = true }
             ) {
                 Icon(Icons.Default.Add, "New Batch")
             }
@@ -67,7 +78,6 @@ fun BatchManagementScreen(
                 .fillMaxSize()
                 .padding(pad)
         ) {
-            // Add sorting/filtering UI here, as it's no longer in the TopAppBar
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.End
@@ -87,19 +97,21 @@ fun BatchManagementScreen(
                     Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(batches, key = { it.batch.batchId }) { batchWithDonations ->
+                ) {                    items(batches, key = { it.batch.batchId }) { batchWithDonations ->
                         SwipeToDeleteContainer(
-                            onDelete = { vm.deleteBatch(batchWithDonations.batch.batchId) }
+                            onDelete = { vm.deleteBatch(batchWithDonations.batch.batchId, userId) }
                         ) {
                             BatchCard(
                                 batchWithDonations = batchWithDonations,
                                 onEdit = {
-                                    // Navigate to the specific batch for editing
-                                    navController.navigate("${Routes.BATCH_ENTRY}/${batchWithDonations.batch.batchId}")
+                                    if (batchWithDonations.batch.status == "open") {
+                                        navController.navigate("${Routes.BATCH_ENTRY}/${batchWithDonations.batch.batchId}")
+                                    }
                                 },
-                                onPrint = { vm.printBatchReport(batchWithDonations.batch.batchId) },
-                                onDepositSlip = { vm.printDepositSlip(batchWithDonations.batch.batchId) }
+                                onPrint = { 
+                                    val file = printDepositSlip(context, null, batchWithDonations.donations, batchWithDonations.batch.createdOn)
+                                    openPdf(context, file)
+                                }
                             )
                         }
                     }
@@ -107,17 +119,78 @@ fun BatchManagementScreen(
             }
         }
     }
+
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = { 
+                    showDatePicker = false
+                    vm.createNewBatch(userId, datePickerState.selectedDateMillis ?: System.currentTimeMillis()) { newBatchId ->
+                        navController.navigate("${Routes.BATCH_ENTRY}/$newBatchId")
+                    }
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+}
+
+fun openPdf(context: Context, file: File) {
+    val uri = FileProvider.getUriForFile(context, context.applicationContext.packageName + ".provider", file)
+    val intent = Intent(Intent.ACTION_VIEW)
+    intent.data = uri
+    intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+    try {
+        context.startActivity(intent)
+    } catch (e: ActivityNotFoundException) {
+        Toast.makeText(context, "No PDF viewer found", Toast.LENGTH_SHORT).show()
+    }
 }
 
 @Composable
 fun BatchCard(
-    batchWithDonations: ERROR,
+    batchWithDonations: BatchWithDonations,
     onEdit: () -> Unit,
-    onPrint: () -> Unit,
-    onDepositSlip: () -> Unit
+    onPrint: () -> Unit
 ) {
-    TODO("Not yet implemented")
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onEdit)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Batch #${batchWithDonations.batch.batchNumber}")
+            Text("Donations: ${batchWithDonations.donations.size}")
+            Text("Total: $${batchWithDonations.donations.sumOf { it.donation.checkAmount }}")
+        }
+    }
 }
 
-// (The rest of the file remains the same: SortingMenu, FilteringMenu, EmptyState, etc.)
-// ...
+@Composable
+fun SortingMenu(sortType: SortType, setSortType: (SortType) -> Unit) {
+
+}
+
+@Composable
+fun FilteringMenu(filterType: FilterType, setFilterType: (FilterType) -> Unit) {
+
+}
+
+@Composable
+fun EmptyState() {
+
+}
+
+@Composable
+fun SwipeToDeleteContainer(onDelete: () -> Unit, content: @Composable () -> Unit) {
+    content()
+}

@@ -1,10 +1,6 @@
 package com.gracechurch.gracefulgiving.ui.common
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -13,8 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.gracechurch.gracefulgiving.app.navigation.AppNavGraph
@@ -23,108 +17,64 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScaffold() {
+fun MainScaffold(userId: Long) {
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    // Get the current route to update the TopAppBar title
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route ?: Routes.DASHBOARD
+    val currentRoute = navBackStackEntry?.destination?.route
 
-    // This is the main UI shell for the authenticated user.
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            AppDrawerContent(navController = navController) {
-                // Close the drawer after a navigation event
-                scope.launch { drawerState.close() }
+            ModalDrawerSheet {
+                NavigationDrawerItem(
+                    label = { Text("Dashboard") },
+                    selected = currentRoute == Routes.DASHBOARD,
+                    onClick = { navController.navigate(Routes.DASHBOARD); scope.launch { drawerState.close() } }
+                )
+                NavigationDrawerItem(
+                    label = { Text("Batch Management") },
+                    selected = currentRoute == Routes.BATCH_MANAGEMENT,
+                    onClick = { navController.navigate(Routes.BATCH_MANAGEMENT); scope.launch { drawerState.close() } }
+                )
+                NavigationDrawerItem(
+                    label = { Text("Donors") },
+                    selected = currentRoute == Routes.DONORS_DONATIONS,
+                    onClick = { navController.navigate(Routes.DONORS_DONATIONS); scope.launch { drawerState.close() } }
+                )
+                NavigationDrawerItem(
+                    label = { Text("Yearly Giving Statements") },
+                    selected = currentRoute == Routes.YEARLY_STATEMENTS,
+                    onClick = { navController.navigate(Routes.YEARLY_STATEMENTS); scope.launch { drawerState.close() } }
+                )
+                NavigationDrawerItem(
+                    label = { Text("Bank Settings") },
+                    selected = currentRoute == Routes.BANK_SETTINGS,
+                    onClick = { navController.navigate(Routes.BANK_SETTINGS); scope.launch { drawerState.close() } }
+                )
             }
         }
     ) {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = {
-                        // Dynamically set the title based on the current screen
-                        Text(currentRoute.toTitleCase())
-                    },
+                    title = { Text("Graceful Giving") },
                     navigationIcon = {
-                        IconButton(onClick = {
-                            scope.launch { drawerState.open() }
-                        }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menu")
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "Open navigation drawer"
+                            )
                         }
                     }
                 )
             }
         ) { innerPadding ->
             Box(modifier = Modifier.padding(innerPadding)) {
-                // The AppNavGraph contains all the main screens of the app.
-                AppNavGraph(navController = navController)
+                AppNavGraph(navController = navController, userId = userId)
             }
         }
     }
-}
-
-@Composable
-fun AppDrawerContent(navController: NavHostController, closeDrawer: () -> Unit) {
-    // Assuming isAdmin logic will be passed down or retrieved from a ViewModel later
-    val isAdmin = true
-
-    ModalDrawerSheet {
-        Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
-            Text("Navigation", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(12.dp))
-            Spacer(Modifier.height(8.dp))
-            NavigationDrawerItem(
-                label = { Text("Dashboard") },
-                selected = false,
-                onClick = {
-                    navController.navigate(Routes.DASHBOARD)
-                    closeDrawer()
-                }
-            )
-            NavigationDrawerItem(
-                label = { Text("Batch Management") },
-                selected = false,
-                onClick = {
-                    navController.navigate(Routes.BATCH_MANAGEMENT)
-                    closeDrawer()
-                }
-            )
-            NavigationDrawerItem(
-                label = { Text("Donors & Donations") },
-                selected = false,
-                onClick = {
-                    navController.navigate(Routes.DONORS_DONATIONS)
-                    closeDrawer()
-                }
-            )
-            if (isAdmin) {
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
-                NavigationDrawerItem(
-                    label = { Text("Bank Settings") },
-                    selected = false,
-                    onClick = {
-                        navController.navigate(Routes.BANK_SETTINGS)
-                        closeDrawer()
-                    }
-                )
-                NavigationDrawerItem(
-                    label = { Text("Yearly Statements") },
-                    selected = false,
-                    onClick = {
-                        navController.navigate(Routes.YEARLY_STATEMENTS)
-                        closeDrawer()
-                    }
-                )
-            }
-        }
-    }
-}
-
-// Helper function to format route names for display
-private fun String.toTitleCase(): String {
-    return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-        .replace('_', ' ')
 }

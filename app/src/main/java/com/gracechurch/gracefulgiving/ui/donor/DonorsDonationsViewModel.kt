@@ -1,14 +1,17 @@
-package com.gracechurch.gracefulgiving.ui.donors
+package com.gracechurch.gracefulgiving.ui.donor
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.gracechurch.gracefulgiving.domain.model.Donation
+import com.gracechurch.gracefulgiving.domain.model.Donor
+import com.gracechurch.gracefulgiving.domain.repository.DonationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import com.gracechurch.gracefulgiving.data.repository.DonorRepository
-import com.gracechurch.gracefulgiving.data.repository.DonationRepository
+import com.gracechurch.gracefulgiving.domain.repository.DonorRepository
 
 @HiltViewModel
 class DonorsDonationsViewModel @Inject constructor(
@@ -23,7 +26,7 @@ class DonorsDonationsViewModel @Inject constructor(
 
     private fun load() = viewModelScope.launch {
         val donors = donorRepository.getAllDonors()
-        val donations = donationRepository.getAllDonations()
+        val donations = donationRepository.getAllDonations().first() // Collect the Flow
         _uiState.value = DonorsDonationsUiState(donors, donations)
     }
 }
@@ -32,7 +35,3 @@ data class DonorsDonationsUiState(
     val donors: List<Donor> = emptyList(),
     val donations: List<Donation> = emptyList()
 )
-
-data class Donor(val id: Long, val name: String)
-
-data class Donation(val id: Long, val donorId: Long, val amount: Double)

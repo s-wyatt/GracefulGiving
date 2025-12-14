@@ -1,12 +1,7 @@
 package com.gracechurch.gracefulgiving.domain.model
 
 data class Donor(
-    val donorId: Long = 0,
+    val donorId: Long,
     val firstName: String,
-    val lastName: String,
-    val optOutStatement: Boolean = false,
-    val createdAt: Long = System.currentTimeMillis()
+    val lastName: String
 )
-val Donor.fullName: String
-    get() = "$firstName $lastName"
-

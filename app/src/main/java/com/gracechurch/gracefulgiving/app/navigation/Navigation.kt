@@ -54,15 +54,12 @@ fun AppNavigation() {
         ) { backStackEntry ->
             val batchId = backStackEntry.arguments?.getLong("batchId") ?: 0L
             BatchEntryScreen(
-                batchId = batchId, // Pass the batchId to the screen
-                onNavigateBack = { navController.popBackStack() }
+                batchId = batchId // Pass the batchId to the screen
             )
         }
 
         composable("bank_settings") {
-            BankSettingsScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
+            BankSettingsScreen()
         }
     }
 }
