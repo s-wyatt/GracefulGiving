@@ -9,7 +9,6 @@ import com.gracechurch.gracefulgiving.data.local.entity.DonorEntity
 import com.gracechurch.gracefulgiving.domain.model.Donation
 import com.gracechurch.gracefulgiving.domain.repository.DonationRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.util.Calendar
 import javax.inject.Inject
@@ -20,12 +19,14 @@ class DonationRepositoryImpl @Inject constructor(
     private val checkImageDao: CheckImageDao
 ) : DonationRepository {
 
+    // GENTLE FIX: This now returns a Flow and is much cleaner.
     override fun getAllDonations(): Flow<List<Donation>> {
         return donationDao.getAllDonations().map { entities ->
             entities.map { mapEntityToDomain(it) }
         }
     }
 
+    // GENTLE FIX: This also returns a Flow now.
     override fun getDonationsByDonor(donorId: Long): Flow<List<Donation>> {
         return donationDao.getDonationsByDonor(donorId).map { entities ->
             entities.map { mapEntityToDomain(it) }

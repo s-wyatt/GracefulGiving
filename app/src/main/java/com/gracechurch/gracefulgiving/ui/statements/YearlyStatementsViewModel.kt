@@ -56,9 +56,7 @@ class YearlyStatementsViewModel @Inject constructor(
 
     fun onYearSelected(year: String) {
         _uiState.update { it.copy(selectedYear = year) }
-        // When a year is selected, also clear any previously selected donor donations
-        // to force a recalculation when a donor is clicked next.
-        onDonorSelected(it.selectedDonorId)
+        onDonorSelected(_uiState.value.selectedDonorId)
     }
 
     fun onDonorSelected(donorId: Long?) {

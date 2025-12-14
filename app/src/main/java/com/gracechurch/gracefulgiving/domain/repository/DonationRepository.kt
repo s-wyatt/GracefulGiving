@@ -5,8 +5,10 @@ import com.gracechurch.gracefulgiving.domain.model.Donation
 import kotlinx.coroutines.flow.Flow
 
 interface DonationRepository {
+    // GENTLE FIX: Return a Flow to allow reactive updates in the ViewModel.
     fun getAllDonations(): Flow<List<Donation>>
     fun getDonationsByDonor(donorId: Long): Flow<List<Donation>>
+
     suspend fun addDonation(
         firstName: String,
         lastName: String,
@@ -16,6 +18,7 @@ interface DonationRepository {
         image: String?,
         batchId: Long
     )
+
     suspend fun deleteDonation(donationId: Long)
     suspend fun updateDonation(donation: DonationEntity)
 

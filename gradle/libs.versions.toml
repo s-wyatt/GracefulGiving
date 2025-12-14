@@ -13,6 +13,7 @@ navigation = "2.7.7"
 compose-material-icons = "1.6.0"
 camerax = "1.4.0"
 mlkit-text-recognition = "16.0.1"
+accompanist = "0.34.0"
 
 # Note: The foundation-layout version is no longer needed
 # as it's managed by the Compose BOM.
@@ -61,7 +62,7 @@ camerax-view = { group = "androidx.camera", name = "camera-view", version.ref = 
 
 # GENTLE FIX: Add library for ML Kit
 mlkit-text-recognition = { group = "com.google.mlkit", name = "text-recognition", version.ref = "mlkit-text-recognition" }
-
+accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanist" }
 # Note: The foundation-layout library is no longer needed
 # as it's managed by the Compose BOM.
 # androidx-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundation-layout" }

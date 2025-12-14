@@ -32,9 +32,12 @@ fun printYearlyStatement(
 
     paint.textSize = 12f
     donations.forEach {
-        canvas.drawText("Date: ${sdf.format(Date(it.date))}", 10f, y, paint)
+        // GENTLE FIX: Use the correct property name 'checkDate' which is a Long.
+        // The ambiguity is resolved because Date(Long) is the only valid option.
+        canvas.drawText("Date: ${sdf.format(Date(it.checkDate))}", 10f, y, paint)
         canvas.drawText("Check Number: ${it.checkNumber}", 200f, y, paint)
-        canvas.drawText("Amount: $${it.amount}", 400f, y, paint)
+        // GENTLE FIX: Use the correct property name 'checkAmount'
+        canvas.drawText("Amount: $${it.checkAmount}", 400f, y, paint)
         y += 20
     }
 
@@ -45,7 +48,8 @@ fun printYearlyStatement(
     paint.textSize = 14f
     canvas.drawText("Total Donations: ${donations.size}", 10f, y, paint)
     y += 20
-    canvas.drawText("Total Amount: $${"%.2f".format(donations.sumOf { it.amount })}", 10f, y, paint)
+    // GENTLE FIX: Use the correct property name 'checkAmount' for the sum
+    canvas.drawText("Total Amount: $${"%.2f".format(donations.sumOf { it.checkAmount })}", 10f, y, paint)
 
     pdfDocument.finishPage(page)
 

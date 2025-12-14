@@ -1,5 +1,12 @@
 package com.gracechurch.gracefulgiving.ui.batch
 
+import android.Manifest
+import android.view.ViewGroup
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -15,22 +22,29 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import com.gracechurch.gracefulgiving.data.local.entity.BankSettingsEntity
 import com.gracechurch.gracefulgiving.data.local.entity.DonationEntity
 import com.gracechurch.gracefulgiving.data.local.relations.DonationWithDonor
 import com.gracechurch.gracefulgiving.domain.model.ScannedCheckData
+import com.gracechurch.gracefulgiving.util.CheckImageAnalyzer
 import com.gracechurch.gracefulgiving.util.printDepositSlip
+import java.util.concurrent.Executors
 
 @Composable
 fun BatchEntryScreen(
     batchId: Long,
     vm: BatchEntryViewModel = hiltViewModel()
 ) {
-
     val state by vm.uiState.collectAsState()
     var showAddDonationDialog by remember { mutableStateOf(false) }
     var showDeleteDonationDialog by remember { mutableStateOf<DonationEntity?>(null) }
@@ -61,7 +75,6 @@ fun BatchEntryScreen(
         }
     ) { pad ->
         Column(Modifier.fillMaxSize().padding(pad)) {
-
             // Summary Card
             Card(Modifier.fillMaxWidth().padding(16.dp)) {
                 Row(
@@ -145,52 +158,54 @@ fun BatchEntryScreen(
     if (showAddDonationDialog) {
         DonationEntryDialog(
             scannedData = state.scannedData,
-            batchId = batchWithDonations?.batch?.batchId ?: 0L,
-            batchDate = batchWithDonations?.batch?.createdOn ?: System.currentTimeMillis(),
+            batchId = batchId,
             onDismiss = {
                 showAddDonationDialog = false
                 vm.clearScannedData()
             },
-            onSave = { fn, ln, cn, amt, dt, img, bId ->
-                vm.addDonation(fn, ln, cn, amt, dt, img, bId)
+            onSave = { fn, ln, cn, amt, dt, img ->
+                vm.addDonation(fn, ln, cn, amt, dt, img, batchId)
                 showAddDonationDialog = false
                 vm.clearScannedData()
             }
         )
     }
 
-    showEditDonationDialog?.let {
+    showEditDonationDialog?.let { existingDonation ->
         DonationEntryDialog(
-            donation = it,
-            batchId = batchWithDonations?.batch?.batchId ?: 0L,
-            batchDate = batchWithDonations?.batch?.createdOn ?: System.currentTimeMillis(),
+            donation = existingDonation,
+            batchId = batchId,
             onDismiss = { showEditDonationDialog = null },
-            onSave = { _, _, _, _, _, _, _ ->
-                vm.updateDonation(it)
+            // The onSave lambda provides all the fields from the dialog
+            onSave = { _, _, updatedCheckNumber, updatedAmount, _, _ ->
+                // Construct the updated entity using the values from the dialog
+                val updatedDonation = existingDonation.copy(
+                    checkNumber = updatedCheckNumber,
+                    checkAmount = updatedAmount
+                )
+                // Now, call the ViewModel function with the correctly typed object
+                vm.updateDonation(updatedDonation)
                 showEditDonationDialog = null
             }
         )
     }
 
-    showDeleteDonationDialog?.let {
+    showDeleteDonationDialog?.let { donation ->
         AlertDialog(
             onDismissRequest = { showDeleteDonationDialog = null },
             title = { Text("Delete Donation?") },
-            text = { Text("Are you sure you want to delete this donation?") },
+            text = { Text("Are you sure you want to delete this donation? This action cannot be undone.") },
             confirmButton = {
                 Button(
                     onClick = {
-                        vm.deleteDonation(it.donationId)
+                        vm.deleteDonation(donation.donationId)
                         showDeleteDonationDialog = null
-                    }
-                ) {
-                    Text("Delete")
-                }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) { Text("Delete") }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDonationDialog = null }) {
-                    Text("Cancel")
-                }
+                TextButton(onClick = { showDeleteDonationDialog = null }) { Text("Cancel") }
             }
         )
     }
@@ -213,9 +228,14 @@ fun BatchEntryScreen(
             batchDate = batchWithDonations?.batch?.createdOn ?: 0L,
             onDismiss = { showDepositSlip = false },
             onPrint = {
-                printDepositSlip(context, state.bankSettings, donations, batchWithDonations?.batch?.createdOn ?: 0L)
-                showDepositSlip = false
-                showCloseConfirmation = true
+                try {
+                    val file = printDepositSlip(context, state.bankSettings, donations, batchWithDonations?.batch?.createdOn ?: 0L)
+                    openPdf(context, file) // Assuming you have an openPdf util function
+                    showDepositSlip = false
+                    showCloseConfirmation = true
+                } catch (e: Exception) {
+                    // Handle error (e.g., show a toast)
+                }
             }
         )
     }
@@ -224,21 +244,17 @@ fun BatchEntryScreen(
         AlertDialog(
             onDismissRequest = { showCloseConfirmation = false },
             title = { Text("Close Batch?") },
-            text = { Text("Would you like to close this batch?") },
+            text = { Text("Closing a batch is final and prevents further edits. Are you sure you want to continue?") },
             confirmButton = {
                 Button(
                     onClick = {
                         vm.closeBatch(batchId)
                         showCloseConfirmation = false
                     }
-                ) {
-                    Text("Close Batch")
-                }
+                ) { Text("Close Batch") }
             },
             dismissButton = {
-                TextButton(onClick = { showCloseConfirmation = false }) {
-                    Text("Cancel")
-                }
+                TextButton(onClick = { showCloseConfirmation = false }) { Text("Cancel") }
             }
         )
     }
@@ -252,36 +268,29 @@ fun DepositSlipDialog(
     onDismiss: () -> Unit,
     onPrint: () -> Unit
 ) {
+    if (bankSettings == null) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text("Bank Settings Missing") },
+            text = { Text("Please configure bank settings before printing a deposit slip.") },
+            confirmButton = { TextButton(onClick = onDismiss) { Text("OK") } }
+        )
+        return
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Deposit Slip") },
+        title = { Text("Print Deposit Slip?") },
         text = {
             Column {
-                bankSettings?.let {
-                    Text("Bank Name: ${it.bankName}")
-                    Text("Account Name: ${it.accountName}")
-                    Text("Account Number: ${it.accountNumber}")
-                }
+                Text("Bank: ${bankSettings.bankName}", style = MaterialTheme.typography.bodyLarge)
+                Text("Account: ${bankSettings.accountNumber}", style = MaterialTheme.typography.bodyLarge)
                 Spacer(modifier = Modifier.height(16.dp))
-                Text("Donations:")
-                donations.forEach {
-                    Text("${it.donor.firstName} ${it.donor.lastName} - #${it.donation.checkNumber} - $${"%.2f".format(it.donation.checkAmount)}")
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("Total Checks: ${donations.size}")
-                Text("Total Amount: $${"%.2f".format(donations.sumOf { it.donation.checkAmount })}")
+                Text("This will generate a PDF containing ${donations.size} checks totaling $${"%.2f".format(donations.sumOf { it.donation.checkAmount })}.")
             }
         },
-        confirmButton = {
-            Button(onClick = onPrint) {
-                Text("Print")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
+        confirmButton = { Button(onClick = onPrint) { Text("Print") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
 }
 
@@ -290,12 +299,11 @@ fun DonationEntryDialog(
     scannedData: ScannedCheckData? = null,
     donation: DonationEntity? = null,
     batchId: Long,
-    batchDate: Long,
     onDismiss: () -> Unit,
-    onSave: (String, String, String, Double, Long, String?, Long) -> Unit
+    onSave: (firstName: String, lastName: String, checkNumber: String, amount: Double, date: Long, image: String?) -> Unit
 ) {
-    var firstName by remember { mutableStateOf(donation?.let { "" } ?: scannedData?.firstName ?: "") }
-    var lastName by remember { mutableStateOf(donation?.let { "" } ?: scannedData?.lastName ?: "") }
+    var firstName by remember { mutableStateOf(scannedData?.firstName ?: "") }
+    var lastName by remember { mutableStateOf(scannedData?.lastName ?: "") }
     var checkNumber by remember { mutableStateOf(donation?.checkNumber ?: scannedData?.checkNumber ?: "") }
     var amount by remember { mutableStateOf(donation?.checkAmount?.toString() ?: scannedData?.amount ?: "") }
 
@@ -304,32 +312,32 @@ fun DonationEntryDialog(
         title = { Text(if (donation == null) "Add Donation" else "Edit Donation") },
         text = {
             Column {
-                OutlinedTextField(
-                    value = firstName, 
-                    onValueChange = { firstName = it }, 
-                    label = { Text("First Name") }, 
-                    enabled = donation == null,
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
-                )
+                if (donation == null) {
+                    OutlinedTextField(
+                        value = firstName,
+                        onValueChange = { firstName = it },
+                        label = { Text("First Name") },
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = lastName,
+                        onValueChange = { lastName = it },
+                        label = { Text("Last Name") },
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
+                    )
+                }
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
-                    value = lastName, 
-                    onValueChange = { lastName = it }, 
-                    label = { Text("Last Name") }, 
-                    enabled = donation == null,
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
-                )
-                Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = checkNumber, 
-                    onValueChange = { checkNumber = it }, 
+                    value = checkNumber,
+                    onValueChange = { checkNumber = it },
                     label = { Text("Check Number") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
-                    value = amount, 
-                    onValueChange = { amount = it }, 
+                    value = amount,
+                    onValueChange = { amount = it },
                     label = { Text("Amount") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
@@ -337,14 +345,11 @@ fun DonationEntryDialog(
         },
         confirmButton = {
             Button(
-                enabled = batchId > 0L,
+                enabled = (donation != null || (firstName.isNotBlank() && lastName.isNotBlank())) &&
+                        checkNumber.isNotBlank() && amount.toDoubleOrNull() != null && batchId > 0L,
                 onClick = {
                     amount.toDoubleOrNull()?.let { amt ->
-                        if (donation == null) {
-                            onSave(firstName, lastName, checkNumber, amt, batchDate, scannedData?.imageData, batchId)
-                        } else {
-                            onSave(firstName, lastName, checkNumber, amt, batchDate, null, batchId)
-                        }
+                        onSave(firstName, lastName, checkNumber, amt, System.currentTimeMillis(), scannedData?.imageData)
                     }
                 }
             ) { Text("Save") }
@@ -352,3 +357,5 @@ fun DonationEntryDialog(
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
 }
+
+
