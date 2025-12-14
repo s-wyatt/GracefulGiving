@@ -9,7 +9,7 @@ import androidx.navigation.navArgument
 import com.gracechurch.gracefulgiving.ui.bank.BankSettingsScreen
 import com.gracechurch.gracefulgiving.ui.batch.BatchEntryScreen
 import com.gracechurch.gracefulgiving.ui.batch.BatchSelectionScreen
-import com.gracechurch.gracefulgiving.presentation.screens.home.LoginScreen
+import com.gracechurch.gracefulgiving.ui.login.LoginScreen
 
 @Composable
 fun AppNavigation() {

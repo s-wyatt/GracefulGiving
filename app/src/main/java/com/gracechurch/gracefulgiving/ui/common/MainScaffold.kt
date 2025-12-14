@@ -32,7 +32,11 @@ fun MainScaffold(userId: Long) {
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet {
-                // Drawer content will be added here in a future step
+                AppDrawerContent(navController = navController) {
+                    scope.launch {
+                        drawerState.close()
+                    }
+                }
             }
         }
     ) {

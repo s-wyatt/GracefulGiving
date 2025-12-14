@@ -9,7 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.gracechurch.gracefulgiving.presentation.screens.home.LoginScreen
+import com.gracechurch.gracefulgiving.ui.login.LoginScreen
 import com.gracechurch.gracefulgiving.ui.common.MainScaffold
 import com.gracefulgiving.gracefulgiving.theme.GracefulGivingTheme
 import dagger.hilt.android.AndroidEntryPoint

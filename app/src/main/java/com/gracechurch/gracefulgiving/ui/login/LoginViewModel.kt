@@ -1,4 +1,4 @@
-package com.gracechurch.gracefulgiving.presentation.viewmodel
+package com.gracechurch.gracefulgiving.ui.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

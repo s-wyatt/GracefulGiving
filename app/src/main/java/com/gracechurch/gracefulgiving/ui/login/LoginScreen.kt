@@ -1,4 +1,4 @@
-package com.gracechurch.gracefulgiving.presentation.screens.home
+package com.gracechurch.gracefulgiving.ui.login
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -8,7 +8,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.gracechurch.gracefulgiving.presentation.viewmodel.LoginViewModel
 
 @Composable
 fun LoginScreen(

@@ -147,7 +147,7 @@ fun YearlyStatementsScreen(
             year = state.selectedYear ?: "N/A",
             onDismiss = { vm.onDonorSelected(null) }, // Clear selection on dismiss
             onPrint = {
-                val file = printYearlyStatement(context, donorName, state.selectedDonorDonations)
+                val file = printYearlyStatement(context, donorName, state.selectedDonorDonations, state.selectedYear ?: "N/A")
                 openPdf(context, file)
             }
         )
