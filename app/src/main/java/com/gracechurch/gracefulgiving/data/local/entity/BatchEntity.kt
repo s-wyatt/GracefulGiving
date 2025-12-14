@@ -9,5 +9,6 @@ data class BatchEntity(
     val batchNumber: Long,
     val userId: Long,
     val createdOn: Long,
-    val status: String = "open"
+    val status: String = "open",
+    val fundId: Long = 1
 )

@@ -22,13 +22,14 @@ class BatchRepositoryImpl @Inject constructor(
     override fun getBatch(id: Long): Flow<BatchWithDonations?> =
         dao.getBatchWithDonations(id)
 
-    override suspend fun createBatch(userId: Long, createdOn: Long): Long {
+    override suspend fun createBatch(userId: Long, createdOn: Long, fundId: Long): Long {
         val nextBatchNumber = (dao.getMaxBatchNumber() ?: 0) + 1
         return dao.insertBatch(
             BatchEntity(
                 batchNumber = nextBatchNumber,
                 userId = userId,
-                createdOn = createdOn
+                createdOn = createdOn,
+                fundId = fundId
             )
         )
     }
@@ -49,9 +50,10 @@ class BatchRepositoryImpl @Inject constructor(
         amount: Double,
         date: Long,
         image: String?,
-        batchId: Long
+        batchId: Long,
+        fundId: Long
     ) {
-        donationRepo.addDonation(firstName, lastName, checkNumber, amount, date, image, batchId)
+        donationRepo.addDonation(firstName, lastName, checkNumber, amount, date, image, batchId, fundId)
     }
 
     override suspend fun deleteDonation(donationId: Long) {

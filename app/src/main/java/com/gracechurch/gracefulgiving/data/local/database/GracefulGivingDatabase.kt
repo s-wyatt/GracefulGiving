@@ -7,12 +7,14 @@ import com.gracechurch.gracefulgiving.data.local.dao.BatchDao
 import com.gracechurch.gracefulgiving.data.local.dao.CheckImageDao
 import com.gracechurch.gracefulgiving.data.local.dao.DonationDao
 import com.gracechurch.gracefulgiving.data.local.dao.DonorDao
+import com.gracechurch.gracefulgiving.data.local.dao.FundDao
 import com.gracechurch.gracefulgiving.data.local.dao.UserDao
 import com.gracechurch.gracefulgiving.data.local.entity.BankSettingsEntity
 import com.gracechurch.gracefulgiving.data.local.entity.BatchEntity
 import com.gracechurch.gracefulgiving.data.local.entity.CheckImageEntity
 import com.gracechurch.gracefulgiving.data.local.entity.DonationEntity
 import com.gracechurch.gracefulgiving.data.local.entity.DonorEntity
+import com.gracechurch.gracefulgiving.data.local.entity.FundEntity
 import com.gracechurch.gracefulgiving.data.local.entity.UserEntity
 
 @Database(
@@ -22,9 +24,10 @@ import com.gracechurch.gracefulgiving.data.local.entity.UserEntity
         BatchEntity::class,
         DonationEntity::class,
         CheckImageEntity::class,
-        BankSettingsEntity::class  // Add this
+        BankSettingsEntity::class,
+        FundEntity::class
     ],
-    version = 2,  // Increment version
+    version = 3,
     exportSchema = false
 )
 abstract class GracefulGivingDatabase : RoomDatabase() {
@@ -34,4 +37,5 @@ abstract class GracefulGivingDatabase : RoomDatabase() {
     abstract fun donationDao(): DonationDao
     abstract fun checkImageDao(): CheckImageDao
     abstract fun bankSettingsDao(): BankSettingsDao
+    abstract fun fundDao(): FundDao
 }

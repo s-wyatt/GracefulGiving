@@ -3,7 +3,9 @@ package com.gracechurch.gracefulgiving.ui.batch
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gracechurch.gracefulgiving.data.local.relations.BatchWithDonations
+import com.gracechurch.gracefulgiving.domain.model.Fund
 import com.gracechurch.gracefulgiving.domain.repository.BatchRepository
+import com.gracechurch.gracefulgiving.domain.repository.FundRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -11,7 +13,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class BatchSelectionViewModel @Inject constructor(
-    private val batchRepo: BatchRepository
+    private val batchRepo: BatchRepository,
+    private val fundRepo: FundRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BatchSelectionUiState())
@@ -29,12 +32,22 @@ class BatchSelectionViewModel @Inject constructor(
         }
     }
 
-    // GENTLE FIX: Update the function to accept the selected date.
-    fun createNewBatch(userId: Long, createdOn: Long, onCreated: (Long) -> Unit) {
+    fun loadFunds() {
         viewModelScope.launch {
             try {
-                // Now pass both parameters to the repository function.
-                val batchId = batchRepo.createBatch(userId, createdOn)
+                fundRepo.getFunds().collect { funds ->
+                    _uiState.update { it.copy(funds = funds) }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = e.message) }
+            }
+        }
+    }
+
+    fun createNewBatch(userId: Long, createdOn: Long, fundId: Long, onCreated: (Long) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val batchId = batchRepo.createBatch(userId, createdOn, fundId)
                 onCreated(batchId)
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = e.message) }
@@ -59,5 +72,6 @@ class BatchSelectionViewModel @Inject constructor(
 
 data class BatchSelectionUiState(
     val batches: List<BatchWithDonations> = emptyList(),
+    val funds: List<Fund> = emptyList(),
     val error: String? = null
 )

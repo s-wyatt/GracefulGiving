@@ -3,8 +3,8 @@ package com.gracechurch.gracefulgiving.util
 import android.content.Context
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
-import com.gracechurch.gracefulgiving.data.local.entity.BankSettingsEntity
 import com.gracechurch.gracefulgiving.data.local.relations.DonationWithDonor
+import com.gracechurch.gracefulgiving.domain.model.Fund
 import java.io.File
 import java.io.FileOutputStream
 import java.text.NumberFormat
@@ -15,19 +15,19 @@ import java.util.Locale
 /**
  * Generates a PDF deposit slip for a given batch of donations.
  * @param context Android context for file operations.
- * @param bankSettings The bank information to display.
+ * @param fund The fund information to display.
  * @param donations The list of donations included in the deposit.
  * @param batchDate The date of the batch.
  * @return A [File] object pointing to the generated PDF.
  */
 fun printDepositSlip(
     context: Context,
-    bankSettings: BankSettingsEntity?,
+    fund: Fund?,
     donations: List<DonationWithDonor>,
     batchDate: Long
 ): File {
-    if (bankSettings == null) {
-        throw IllegalArgumentException("Bank settings are required to print a deposit slip.")
+    if (fund == null) {
+        throw IllegalArgumentException("Fund information is required to print a deposit slip.")
     }
 
     // Create PDF document
@@ -76,13 +76,13 @@ fun printDepositSlip(
 
     // 2. Bank and Account Info
     canvas.drawText("Bank Name:", leftMargin, yPosition, headerPaint)
-    canvas.drawText(bankSettings.bankName, leftMargin + 150f, yPosition, normalPaint)
+    canvas.drawText(fund.bankName, leftMargin + 150f, yPosition, normalPaint)
     yPosition += 20f
     canvas.drawText("Account Name:", leftMargin, yPosition, headerPaint)
-    canvas.drawText(bankSettings.accountName, leftMargin + 150f, yPosition, normalPaint)
+    canvas.drawText(fund.accountName, leftMargin + 150f, yPosition, normalPaint)
     yPosition += 20f
     canvas.drawText("Account Number:", leftMargin, yPosition, headerPaint)
-    canvas.drawText(bankSettings.accountNumber, leftMargin + 150f, yPosition, normalPaint)
+    canvas.drawText(fund.accountNumber, leftMargin + 150f, yPosition, normalPaint)
     yPosition += 20f
     canvas.drawText("Batch Date:", leftMargin, yPosition, headerPaint)
     canvas.drawText(dateFormat.format(Date(batchDate)), leftMargin + 150f, yPosition, normalPaint)

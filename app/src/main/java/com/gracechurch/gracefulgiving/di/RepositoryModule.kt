@@ -5,12 +5,14 @@ import com.gracechurch.gracefulgiving.data.repository.BankSettingsRepositoryImpl
 import com.gracechurch.gracefulgiving.data.repository.BatchRepositoryImpl
 import com.gracechurch.gracefulgiving.data.repository.DonationRepositoryImpl
 import com.gracechurch.gracefulgiving.data.repository.DonorRepositoryImpl
+import com.gracechurch.gracefulgiving.data.repository.FundRepositoryImpl
 import com.gracechurch.gracefulgiving.data.repository.UserRepositoryImpl
 import com.gracechurch.gracefulgiving.domain.repository.AuthRepository
 import com.gracechurch.gracefulgiving.domain.repository.BankSettingsRepository
 import com.gracechurch.gracefulgiving.domain.repository.BatchRepository
 import com.gracechurch.gracefulgiving.domain.repository.DonationRepository
 import com.gracechurch.gracefulgiving.domain.repository.DonorRepository
+import com.gracechurch.gracefulgiving.domain.repository.FundRepository
 import com.gracechurch.gracefulgiving.domain.repository.UserRepository
 import dagger.Binds
 import dagger.Module
@@ -50,4 +52,9 @@ abstract class RepositoryModule {
     abstract fun bindUserRepository(
         userRepositoryImpl: UserRepositoryImpl
     ): UserRepository
+
+    @Binds
+    abstract fun bindFundRepository(
+        fundRepositoryImpl: FundRepositoryImpl
+    ): FundRepository
 }

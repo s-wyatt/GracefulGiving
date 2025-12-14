@@ -40,7 +40,8 @@ class DonationRepositoryImpl @Inject constructor(
         amount: Double,
         date: Long,
         image: String?,
-        batchId: Long
+        batchId: Long,
+        fundId: Long
     ) {
         // A more robust implementation would check if a donor exists first.
         val donorId = donorDao.insertDonor(
@@ -54,7 +55,8 @@ class DonationRepositoryImpl @Inject constructor(
                 checkNumber = checkNumber,
                 checkAmount = amount,
                 checkDate = date,
-                checkImage = image
+                checkImage = image,
+                fundId = fundId
             )
         )
 
@@ -116,7 +118,8 @@ class DonationRepositoryImpl @Inject constructor(
             checkAmount = donationEntity.checkAmount,
             checkDate = donationEntity.checkDate,
             checkNumber = donationEntity.checkNumber,
-            checkImage = donationEntity.checkImage
+            checkImage = donationEntity.checkImage,
+            fundId = donationEntity.fundId
         )
     }
 }

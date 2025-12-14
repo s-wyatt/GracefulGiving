@@ -7,7 +7,6 @@ import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "donations",
-    // GENTLE FIX: Add the foreignKeys block to define relationships
     foreignKeys = [
         ForeignKey(
             entity = DonorEntity::class,
@@ -20,9 +19,15 @@ import androidx.room.PrimaryKey
             parentColumns = ["batchId"],
             childColumns = ["batchId"],
             onDelete = ForeignKey.CASCADE // If a batch is deleted, delete its donations
+        ),
+        ForeignKey(
+            entity = FundEntity::class,
+            parentColumns = ["fundId"],
+            childColumns = ["fundId"],
+            onDelete = ForeignKey.SET_DEFAULT
         )
     ],
-    indices = [Index("donorId"), Index("batchId")]
+    indices = [Index("donorId"), Index("batchId"), Index("fundId")]
 )
 data class DonationEntity(
     @PrimaryKey(autoGenerate = true)
@@ -32,5 +37,6 @@ data class DonationEntity(
     val checkNumber: String,
     val checkAmount: Double,
     val checkDate: Long,
-    val checkImage: String? = null
+    val checkImage: String? = null,
+    val fundId: Long = 1
 )

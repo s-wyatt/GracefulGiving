@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 interface BatchRepository {
     fun getAllBatches(): Flow<List<BatchWithDonations>>
     fun getBatch(id: Long): Flow<BatchWithDonations?>
-    suspend fun createBatch(userId: Long, createdOn: Long): Long
+    suspend fun createBatch(userId: Long, createdOn: Long, fundId: Long = 1): Long
     suspend fun deleteBatch(batchId: Long)
     suspend fun closeBatch(batchId: Long)
     suspend fun addDonation(
@@ -18,7 +18,8 @@ interface BatchRepository {
         amount: Double,
         date: Long,
         image: String?,
-        batchId: Long
+        batchId: Long,
+        fundId: Long = 1
     )
     suspend fun deleteDonation(donationId: Long)
     suspend fun updateDonation(donation: DonationEntity)

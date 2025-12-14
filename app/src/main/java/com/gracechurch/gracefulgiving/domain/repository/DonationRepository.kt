@@ -16,7 +16,8 @@ interface DonationRepository {
         amount: Double,
         date: Long,
         image: String?,
-        batchId: Long
+        batchId: Long,
+        fundId: Long = 1
     )
 
     suspend fun deleteDonation(donationId: Long)

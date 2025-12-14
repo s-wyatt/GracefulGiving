@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -70,6 +71,16 @@ fun AppDrawerContent(navController: NavController, closeDrawer: () -> Unit) {
         selected = false,
         onClick = {
             navController.navigate(Routes.BANK_SETTINGS)
+            closeDrawer()
+        }
+    )
+
+    NavigationDrawerItem(
+        label = { Text("Funds", style = itemTextStyle) },
+        icon = { Icon(Icons.Default.MonetizationOn, contentDescription = "Funds") },
+        selected = false,
+        onClick = {
+            navController.navigate(Routes.FUND_MANAGEMENT)
             closeDrawer()
         }
     )

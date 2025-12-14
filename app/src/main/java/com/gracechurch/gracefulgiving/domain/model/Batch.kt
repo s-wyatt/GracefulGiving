@@ -11,5 +11,6 @@ data class Batch(
     val batchDate: Long,
     val createdBy: Long,
     val createdOn: Long = System.currentTimeMillis(),
-    val status: String = "open"
+    val status: String = "open",
+    val fundId: Long = 1
 )

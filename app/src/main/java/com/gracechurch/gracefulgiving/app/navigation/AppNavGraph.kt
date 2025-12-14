@@ -11,6 +11,7 @@ import com.gracechurch.gracefulgiving.ui.bank.BankSettingsScreen
 import com.gracechurch.gracefulgiving.ui.batch.BatchManagementScreen
 import com.gracechurch.gracefulgiving.ui.dashboard.DashboardScreen
 import com.gracechurch.gracefulgiving.ui.donor.DonorsDonationsScreen
+import com.gracechurch.gracefulgiving.ui.fund.FundManagementScreen
 import com.gracechurch.gracefulgiving.ui.statements.YearlyStatementsScreen
 
 @Composable
@@ -30,6 +31,9 @@ fun AppNavGraph(navController: NavHostController, userId: Long) {
         }
         composable(Routes.YEARLY_STATEMENTS) {
             YearlyStatementsScreen(navController)
+        }
+        composable(Routes.FUND_MANAGEMENT) {
+            FundManagementScreen(onNavigateUp = { navController.navigateUp() })
         }
 
         // The destination for the Batch Entry screen

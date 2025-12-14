@@ -10,5 +10,6 @@ data class Donation(
     val checkAmount: Double,
     val checkDate: Long,
     val checkNumber: String,
-    val checkImage: String?
+    val checkImage: String?,
+    val fundId: Long = 1
 )

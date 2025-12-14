@@ -1,10 +1,13 @@
 package com.gracechurch.gracefulgiving.util
 
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import android.os.Environment
 import android.widget.Toast
+import androidx.core.content.FileProvider
 import com.gracechurch.gracefulgiving.domain.model.Donation
 import java.io.File
 import java.io.FileOutputStream
@@ -49,11 +52,19 @@ fun printYearlyStatement(
     canvas.drawText("Total Donations: ${donations.size}", 10f, y, paint)
     y += 20
     // GENTLE FIX: Use the correct property name 'checkAmount' for the sum
-    canvas.drawText("Total Amount: $${"%.2f".format(donations.sumOf { it.checkAmount })}", 10f, y, paint)
+    canvas.drawText(
+        "Total Amount: $${"%.2f".format(donations.sumOf { it.checkAmount })}",
+        10f,
+        y,
+        paint
+    )
 
     pdfDocument.finishPage(page)
 
-    val file = File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "yearly_statement_${donorName.replace(" ", "_")}_$year.pdf")
+    val file = File(
+        context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS),
+        "yearly_statement_${donorName.replace(" ", "_")}_$year.pdf"
+    )
     try {
         pdfDocument.writeTo(FileOutputStream(file))
         Toast.makeText(context, "Statement saved to ${file.absolutePath}", Toast.LENGTH_LONG).show()
@@ -63,4 +74,37 @@ fun printYearlyStatement(
     }
     pdfDocument.close()
     return file
+}
+/**
+ * Opens a PDF file using an Intent.
+ *
+ * @param context The context needed to create the Intent and FileProvider URI.
+ * @param file The PDF file to be opened.
+ */
+
+fun openPdf(context: Context, file: File) {
+    // Get a content URI for the file using FileProvider for security
+    val uri = FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.provider", // This must match your FileProvider authority
+        file
+    )
+
+    // Create an Intent to view the PDF
+    val intent = Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(uri, "application/pdf")
+        // Grant read permission to the app that will handle this Intent
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+
+    try {
+        context.startActivity(intent)
+    } catch (e: ActivityNotFoundException) {
+        // Handle the case where no PDF viewer is installed
+        Toast.makeText(
+            context,
+            "No application found to open PDF files.",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
 }

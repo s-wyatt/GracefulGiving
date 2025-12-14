@@ -32,11 +32,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
-import com.gracechurch.gracefulgiving.data.local.entity.BankSettingsEntity
 import com.gracechurch.gracefulgiving.data.local.entity.DonationEntity
 import com.gracechurch.gracefulgiving.data.local.relations.DonationWithDonor
+import com.gracechurch.gracefulgiving.domain.model.Fund
 import com.gracechurch.gracefulgiving.domain.model.ScannedCheckData
 import com.gracechurch.gracefulgiving.util.CheckImageAnalyzer
+import com.gracechurch.gracefulgiving.util.openPdf
 import com.gracechurch.gracefulgiving.util.printDepositSlip
 import java.util.concurrent.Executors
 
@@ -64,6 +65,7 @@ fun BatchEntryScreen(
     val totalAmount = donations.sumOf { it.donation.checkAmount }
     val totalAmountText = "$${"%.2f".format(totalAmount)}"
     val isBatchClosed = batchWithDonations?.batch?.status == "closed"
+    val fund = state.fund
 
     Scaffold(
         floatingActionButton = {
@@ -88,6 +90,12 @@ fun BatchEntryScreen(
                     Column {
                         Text("Total", style = MaterialTheme.typography.bodySmall)
                         Text(totalAmountText, style = MaterialTheme.typography.headlineMedium)
+                    }
+                    fund?.let {
+                        Column {
+                            Text("Fund", style = MaterialTheme.typography.bodySmall)
+                            Text(it.name, style = MaterialTheme.typography.headlineMedium)
+                        }
                     }
                     if (isBatchClosed) {
                         Text("Closed", style = MaterialTheme.typography.headlineMedium)
@@ -223,13 +231,13 @@ fun BatchEntryScreen(
 
     if (showDepositSlip) {
         DepositSlipDialog(
-            bankSettings = state.bankSettings,
+            fund = fund,
             donations = donations,
             batchDate = batchWithDonations?.batch?.createdOn ?: 0L,
             onDismiss = { showDepositSlip = false },
             onPrint = {
                 try {
-                    val file = printDepositSlip(context, state.bankSettings, donations, batchWithDonations?.batch?.createdOn ?: 0L)
+                    val file = printDepositSlip(context, fund, donations, batchWithDonations?.batch?.createdOn ?: 0L)
                     openPdf(context, file) // Assuming you have an openPdf util function
                     showDepositSlip = false
                     showCloseConfirmation = true
@@ -262,17 +270,17 @@ fun BatchEntryScreen(
 
 @Composable
 fun DepositSlipDialog(
-    bankSettings: BankSettingsEntity?,
+    fund: Fund?,
     donations: List<DonationWithDonor>,
     batchDate: Long,
     onDismiss: () -> Unit,
     onPrint: () -> Unit
 ) {
-    if (bankSettings == null) {
+    if (fund == null) {
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text("Bank Settings Missing") },
-            text = { Text("Please configure bank settings before printing a deposit slip.") },
+            title = { Text("Fund Information Missing") },
+            text = { Text("Cannot print deposit slip because the fund information is not available.") },
             confirmButton = { TextButton(onClick = onDismiss) { Text("OK") } }
         )
         return
@@ -283,8 +291,8 @@ fun DepositSlipDialog(
         title = { Text("Print Deposit Slip?") },
         text = {
             Column {
-                Text("Bank: ${bankSettings.bankName}", style = MaterialTheme.typography.bodyLarge)
-                Text("Account: ${bankSettings.accountNumber}", style = MaterialTheme.typography.bodyLarge)
+                Text("Bank: ${fund.bankName}", style = MaterialTheme.typography.bodyLarge)
+                Text("Account: ${fund.accountNumber}", style = MaterialTheme.typography.bodyLarge)
                 Spacer(modifier = Modifier.height(16.dp))
                 Text("This will generate a PDF containing ${donations.size} checks totaling $${"%.2f".format(donations.sumOf { it.donation.checkAmount })}.")
             }

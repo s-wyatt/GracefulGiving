@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.gracechurch.gracefulgiving.domain.model.Fund
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -24,9 +25,21 @@ fun BatchSelectionScreen(
 ) {
     val state by vm.uiState.collectAsState()
     val batches = state.batches
+    val funds = state.funds
+
+    var showCreateBatchDialog by remember { mutableStateOf(false) }
+    var selectedFund by remember { mutableStateOf<Fund?>(null) }
+    var expanded by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         vm.loadBatches()
+        vm.loadFunds()
+    }
+
+    LaunchedEffect(funds) {
+        if (funds.isNotEmpty() && selectedFund == null) {
+            selectedFund = funds.first()
+        }
     }
 
     Scaffold(
@@ -37,19 +50,12 @@ fun BatchSelectionScreen(
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(Icons.Default.Settings, "Settings")
                     }
-                    IconButton(onClick = onNavigateToSettings) {
-                        Icon(Icons.Default.Settings, "Settings")
-                    }
                 }
             )
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = {
-                    vm.createNewBatch(userId, System.currentTimeMillis()) { batchId ->
-                        onNavigateToBatchEntry(batchId)
-                    }
-                }
+                onClick = { showCreateBatchDialog = true }
             ) {
                 Icon(Icons.Default.Add, "New Batch")
             }
@@ -141,5 +147,64 @@ fun BatchSelectionScreen(
                 }
             }
         }
+    }
+
+    if (showCreateBatchDialog) {
+        AlertDialog(
+            onDismissRequest = { showCreateBatchDialog = false },
+            title = { Text("Create New Batch") },
+            text = {
+                Column {
+                    Text("Select a fund for the new batch:")
+                    Spacer(Modifier.height(16.dp))
+                    ExposedDropdownMenuBox(
+                        expanded = expanded,
+                        onExpandedChange = { expanded = !expanded }
+                    ) {
+                        TextField(
+                            value = selectedFund?.name ?: "Select a fund",
+                            onValueChange = {},
+                            readOnly = true,
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                            modifier = Modifier.menuAnchor()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false }
+                        ) {
+                            funds.forEach { fund ->
+                                DropdownMenuItem(
+                                    text = { Text(fund.name) },
+                                    onClick = {
+                                        selectedFund = fund
+                                        expanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        selectedFund?.let { fund ->
+                            vm.createNewBatch(userId, System.currentTimeMillis(), fund.fundId) { batchId ->
+                                onNavigateToBatchEntry(batchId)
+                            }
+                        }
+                        showCreateBatchDialog = false
+                    },
+                    enabled = selectedFund != null
+                ) {
+                    Text("Create")
+                }
+            },
+            dismissButton = {
+                Button(onClick = { showCreateBatchDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }

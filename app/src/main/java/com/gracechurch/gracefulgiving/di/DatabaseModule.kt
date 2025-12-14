@@ -36,7 +36,7 @@ object DatabaseModule {
                 override fun onCreate(db: SupportSQLiteDatabase) {
                     super.onCreate(db)
 
-                    // Initialize database with default admin user
+                    // Initialize database with default admin user and funds
                     CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
                         // Insert default admin user
                         val hashedPassword = hashPassword("admin")
@@ -45,6 +45,16 @@ object DatabaseModule {
                         db.execSQL("""
                             INSERT INTO users (id, email, username, passwordHash, role, tempPassword, isTemp, createdAt)
                             VALUES (1, 'admin@gbc.com', 'admin', '$hashedPassword', 'ADMIN', 'admin', 1, $currentTime)
+                        """)
+
+                        // Insert default funds
+                        db.execSQL("""
+                            INSERT INTO funds (fundId, name, bankName, accountName, accountNumber)
+                            VALUES (1, 'General Fund', 'Default Bank', 'General Account', '1234567890')
+                        """)
+                        db.execSQL("""
+                            INSERT INTO funds (fundId, name, bankName, accountName, accountNumber)
+                            VALUES (2, 'Deacons'' Fund', 'Default Bank', 'Deacons Account', '0987654321')
                         """)
                     }
                 }
@@ -87,6 +97,13 @@ object DatabaseModule {
     fun provideBankSettingsDao(database: GracefulGivingDatabase): BankSettingsDao {
         return database.bankSettingsDao()
     }
+
+    @Provides
+    @Singleton
+    fun provideFundDao(database: GracefulGivingDatabase): FundDao {
+        return database.fundDao()
+    }
+
     /**
      * Simple password hashing function
      * WARNING: This is a basic implementation for development only!
