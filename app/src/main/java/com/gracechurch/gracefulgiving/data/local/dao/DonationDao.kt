@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.gracechurch.gracefulgiving.data.local.entity.DonationEntity
+import com.gracechurch.gracefulgiving.domain.model.Donation
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -33,6 +34,7 @@ interface DonationDao {
 
     @Query("SELECT SUM(checkAmount) FROM donations WHERE checkDate >= :since")
     suspend fun getTotalDonationsSince(since: Long): Double?
+
     @Query("SELECT SUM(checkAmount) FROM donations WHERE checkDate >= :startDate AND checkDate <= :endDate")
     suspend fun getTotalBetweenDates(startDate: Long, endDate: Long): Double?
 }

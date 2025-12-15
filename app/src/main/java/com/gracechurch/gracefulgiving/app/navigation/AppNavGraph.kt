@@ -9,7 +9,7 @@ import androidx.navigation.navArgument
 import com.gracechurch.gracefulgiving.ui.batch.BatchEntryScreen
 import com.gracechurch.gracefulgiving.ui.batch.BatchManagementScreen
 import com.gracechurch.gracefulgiving.ui.dashboard.DashboardScreen
-import com.gracechurch.gracefulgiving.ui.donor.DonorsDonationsScreen
+import com.gracechurch.gracefulgiving.ui.donor.DonorListScreen
 import com.gracechurch.gracefulgiving.ui.fund.FundManagementScreen
 import com.gracechurch.gracefulgiving.ui.statements.YearlyStatementsScreen
 
@@ -23,7 +23,7 @@ fun AppNavGraph(navController: NavHostController, userId: Long) {
             BatchManagementScreen(navController, userId)
         }
         composable(Routes.DONORS_DONATIONS) {
-            DonorsDonationsScreen(navController)
+            DonorListScreen(navController)
         }
         composable(Routes.YEARLY_STATEMENTS) {
             YearlyStatementsScreen(navController)

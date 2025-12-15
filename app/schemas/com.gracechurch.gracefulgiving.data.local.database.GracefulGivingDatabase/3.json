@@ -1,0 +1,444 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 3,
+    "identityHash": "2daf6257bba8b3815e7bfa250dda9b4d",
+    "entities": [
+      {
+        "tableName": "users",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `email` TEXT NOT NULL, `username` TEXT NOT NULL, `passwordHash` TEXT NOT NULL, `role` TEXT NOT NULL, `tempPassword` TEXT, `isTemp` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `createdBy` INTEGER)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "email",
+            "columnName": "email",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "username",
+            "columnName": "username",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "passwordHash",
+            "columnName": "passwordHash",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "role",
+            "columnName": "role",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tempPassword",
+            "columnName": "tempPassword",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "isTemp",
+            "columnName": "isTemp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdBy",
+            "columnName": "createdBy",
+            "affinity": "INTEGER",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "donors",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`donorId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `firstName` TEXT NOT NULL, `lastName` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "donorId",
+            "columnName": "donorId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "firstName",
+            "columnName": "firstName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastName",
+            "columnName": "lastName",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "donorId"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "batches",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`batchId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `batchNumber` INTEGER NOT NULL, `userId` INTEGER NOT NULL, `createdOn` INTEGER NOT NULL, `status` TEXT NOT NULL, `fundId` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "batchId",
+            "columnName": "batchId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "batchNumber",
+            "columnName": "batchNumber",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userId",
+            "columnName": "userId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdOn",
+            "columnName": "createdOn",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fundId",
+            "columnName": "fundId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "batchId"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "donations",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`donationId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `donorId` INTEGER NOT NULL, `batchId` INTEGER NOT NULL, `checkNumber` TEXT NOT NULL, `checkAmount` REAL NOT NULL, `checkDate` INTEGER NOT NULL, `checkImage` TEXT, `fundId` INTEGER NOT NULL, FOREIGN KEY(`donorId`) REFERENCES `donors`(`donorId`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`batchId`) REFERENCES `batches`(`batchId`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`fundId`) REFERENCES `funds`(`fundId`) ON UPDATE NO ACTION ON DELETE SET DEFAULT )",
+        "fields": [
+          {
+            "fieldPath": "donationId",
+            "columnName": "donationId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "donorId",
+            "columnName": "donorId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "batchId",
+            "columnName": "batchId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "checkNumber",
+            "columnName": "checkNumber",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "checkAmount",
+            "columnName": "checkAmount",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "checkDate",
+            "columnName": "checkDate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "checkImage",
+            "columnName": "checkImage",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "fundId",
+            "columnName": "fundId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "donationId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_donations_donorId",
+            "unique": false,
+            "columnNames": [
+              "donorId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_donations_donorId` ON `${TABLE_NAME}` (`donorId`)"
+          },
+          {
+            "name": "index_donations_batchId",
+            "unique": false,
+            "columnNames": [
+              "batchId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_donations_batchId` ON `${TABLE_NAME}` (`batchId`)"
+          },
+          {
+            "name": "index_donations_fundId",
+            "unique": false,
+            "columnNames": [
+              "fundId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_donations_fundId` ON `${TABLE_NAME}` (`fundId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "donors",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "donorId"
+            ],
+            "referencedColumns": [
+              "donorId"
+            ]
+          },
+          {
+            "table": "batches",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "batchId"
+            ],
+            "referencedColumns": [
+              "batchId"
+            ]
+          },
+          {
+            "table": "funds",
+            "onDelete": "SET DEFAULT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "fundId"
+            ],
+            "referencedColumns": [
+              "fundId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "check_images",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`checkImageId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `donationId` INTEGER NOT NULL, `batchId` INTEGER NOT NULL, `donorId` INTEGER, `imageData` TEXT NOT NULL, `capturedAt` INTEGER NOT NULL, FOREIGN KEY(`donationId`) REFERENCES `donations`(`donationId`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`batchId`) REFERENCES `batches`(`batchId`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`donorId`) REFERENCES `donors`(`donorId`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "checkImageId",
+            "columnName": "checkImageId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "donationId",
+            "columnName": "donationId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "batchId",
+            "columnName": "batchId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "donorId",
+            "columnName": "donorId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "imageData",
+            "columnName": "imageData",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "capturedAt",
+            "columnName": "capturedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "checkImageId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_check_images_donationId",
+            "unique": false,
+            "columnNames": [
+              "donationId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_check_images_donationId` ON `${TABLE_NAME}` (`donationId`)"
+          },
+          {
+            "name": "index_check_images_batchId",
+            "unique": false,
+            "columnNames": [
+              "batchId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_check_images_batchId` ON `${TABLE_NAME}` (`batchId`)"
+          },
+          {
+            "name": "index_check_images_donorId",
+            "unique": false,
+            "columnNames": [
+              "donorId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_check_images_donorId` ON `${TABLE_NAME}` (`donorId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "donations",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "donationId"
+            ],
+            "referencedColumns": [
+              "donationId"
+            ]
+          },
+          {
+            "table": "batches",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "batchId"
+            ],
+            "referencedColumns": [
+              "batchId"
+            ]
+          },
+          {
+            "table": "donors",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "donorId"
+            ],
+            "referencedColumns": [
+              "donorId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "funds",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`fundId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `bankName` TEXT NOT NULL, `accountName` TEXT NOT NULL, `accountNumber` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "fundId",
+            "columnName": "fundId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bankName",
+            "columnName": "bankName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "accountName",
+            "columnName": "accountName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "accountNumber",
+            "columnName": "accountNumber",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "fundId"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2daf6257bba8b3815e7bfa250dda9b4d')"
+    ]
+  }
+}

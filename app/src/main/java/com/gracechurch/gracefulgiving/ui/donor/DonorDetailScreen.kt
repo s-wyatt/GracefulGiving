@@ -36,21 +36,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
 import com.gracechurch.gracefulgiving.domain.model.Donation
 import com.gracechurch.gracefulgiving.domain.model.Donor
-import com.gracechurch.gracefulgiving.ui.donation.DonationViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DonorDetailScreen(
     donorId: Long,
     navController: NavController,
-    viewModel: DonorDetailViewModel = hiltViewModel(),
-    donationViewModel: DonationViewModel = hiltViewModel()
+    viewModel: DonorDetailViewModel = hiltViewModel()
 ) {
     val donorState by viewModel.donor.collectAsState()
     val donationsState by viewModel.donations.collectAsState()
@@ -64,9 +63,9 @@ fun DonorDetailScreen(
     }
 
     val sortedDonations = if (sortAscending) {
-        donationsState.sortedBy { it.donationDate }
+        donationsState.sortedBy { it.checkDate }
     } else {
-        donationsState.sortedByDescending { it.donationDate }
+        donationsState.sortedByDescending { it.checkDate }
     }
 
     Scaffold(
@@ -80,18 +79,19 @@ fun DonorDetailScreen(
                 }
             )
         }
-    ) {
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(it)
+                .padding(paddingValues)
         ) {
             donorState?.let {
                 DonorInfo(donor = it, onSave = { viewModel.updateDonor(it) })
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Row {
-                Text("Donations")
+            Row(modifier = Modifier.padding(horizontal = 16.dp)) {
+                Text("Donations", style = MaterialTheme.typography.headlineSmall)
+                Spacer(modifier = Modifier.weight(1f))
                 IconButton(onClick = { sortAscending = !sortAscending }) {
                     Icon(
                         if (sortAscending) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
@@ -100,28 +100,34 @@ fun DonorDetailScreen(
                 }
             }
 
-            LazyColumn {
+            LazyColumn(modifier = Modifier.padding(horizontal = 8.dp)) {
                 items(sortedDonations) { donation ->
-                    DonationListItem(donation = donation) {
-                        donation.checkImagePath?.let { path ->
-                            showCheckImageDialog = path
+                    DonationListItem(
+                        donation = donation,
+                        onDonationClick = {
+                            navController.navigate("donation/${donation.donationId}")
+                        },
+                        onImageClick = { imagePath ->
+                            showCheckImageDialog = imagePath
                         }
-                    }
+                    )
                 }
             }
         }
     }
 
-    showCheckImageDialog?.let {
-        val checkImage by donationViewModel.getCheckImage(it).collectAsState(initial = null)
-
+    // Dialog to show the check image
+    showCheckImageDialog?.let { imagePath ->
         AlertDialog(
             onDismissRequest = { showCheckImageDialog = null },
             title = { Text("Check Image") },
             text = {
-                checkImage?.let { bitmap ->
-                    Image(bitmap = bitmap.asImageBitmap(), contentDescription = "Check Image")
-                }
+                Image(
+                    painter = rememberAsyncImagePainter(imagePath),
+                    contentDescription = "Check Image",
+                    modifier = Modifier.fillMaxWidth(),
+                    contentScale = ContentScale.Fit
+                )
             },
             confirmButton = {
                 TextButton(onClick = { showCheckImageDialog = null }) {
@@ -134,9 +140,8 @@ fun DonorDetailScreen(
 
 @Composable
 fun DonorInfo(donor: Donor, onSave: (Donor) -> Unit) {
-    var firstName by remember { mutableStateOf(donor.firstName) }
-    var lastName by remember { mutableStateOf(donor.lastName) }
-    var address by remember { mutableStateOf(donor.address) }
+    var firstName by remember(donor.firstName) { mutableStateOf(donor.firstName) }
+    var lastName by remember(donor.lastName) { mutableStateOf(donor.lastName) }
 
     Column(modifier = Modifier.padding(16.dp)) {
         OutlinedTextField(
@@ -152,38 +157,37 @@ fun DonorInfo(donor: Donor, onSave: (Donor) -> Unit) {
             label = { Text("Last Name") },
             modifier = Modifier.fillMaxWidth()
         )
-        Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = address,
-            onValueChange = { address = it },
-            label = { Text("Address") },
-            modifier = Modifier.fillMaxWidth()
-        )
         Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = { onSave(donor.copy(firstName = firstName, lastName = lastName, address = address)) }) {
+        Button(onClick = { onSave(donor.copy(firstName = firstName, lastName = lastName)) }) {
             Text("Save")
         }
     }
 }
 
 @Composable
-fun DonationListItem(donation: Donation, onDonationClick: (Donation) -> Unit) {
+fun DonationListItem(
+    donation: Donation,
+    onDonationClick: () -> Unit,
+    onImageClick: (String) -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
-            .clickable { onDonationClick(donation) }
+            .padding(vertical = 4.dp)
+            .clickable { onDonationClick() }
     ) {
         Row(modifier = Modifier.padding(16.dp)) {
             Column(modifier = Modifier.weight(1f)) {
                 Text("Amount: $${donation.checkAmount}")
-                Text("Date: ${donation.donationDate}")
+                Text("Date: ${donation.checkDate}")
             }
-            donation.checkImagePath?.let {
+            donation.checkImage?.let { imagePath ->
                 Image(
-                    painter = rememberImagePainter(it),
+                    painter = rememberAsyncImagePainter(imagePath),
                     contentDescription = "Check Image",
-                    modifier = Modifier.size(50.dp)
+                    modifier = Modifier
+                        .size(50.dp)
+                        .clickable { onImageClick(imagePath) }
                 )
             }
         }

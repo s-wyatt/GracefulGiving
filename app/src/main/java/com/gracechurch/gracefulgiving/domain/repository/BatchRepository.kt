@@ -1,7 +1,7 @@
 package com.gracechurch.gracefulgiving.domain.repository
 
-import com.gracechurch.gracefulgiving.data.local.entity.DonationEntity
 import com.gracechurch.gracefulgiving.data.local.relations.BatchWithDonations
+import com.gracechurch.gracefulgiving.domain.model.Donation
 import com.gracechurch.gracefulgiving.ui.dashboard.BatchInfo // Import the data class
 import kotlinx.coroutines.flow.Flow
 
@@ -22,7 +22,7 @@ interface BatchRepository {
         fundId: Long = 1
     )
     suspend fun deleteDonation(donationId: Long)
-    suspend fun updateDonation(donation: DonationEntity)
+    suspend fun updateDonation(donation: Donation)
     suspend fun generateBatchReport(batchId: Long)
     suspend fun generateDepositSlip(batchId: Long)
 

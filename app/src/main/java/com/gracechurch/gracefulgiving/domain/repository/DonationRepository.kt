@@ -1,6 +1,5 @@
 package com.gracechurch.gracefulgiving.domain.repository
 
-import com.gracechurch.gracefulgiving.data.local.entity.DonationEntity
 import com.gracechurch.gracefulgiving.domain.model.Donation
 import kotlinx.coroutines.flow.Flow
 
@@ -21,7 +20,8 @@ interface DonationRepository {
     )
 
     suspend fun deleteDonation(donationId: Long)
-    suspend fun updateDonation(donation: DonationEntity)
+    suspend fun updateDonation(donation: Donation)
+    suspend fun getDonationById(id: Long): Donation?
 
     suspend fun getMonthToDateTotal(): Double
     suspend fun getQuarterToDateTotal(): Double

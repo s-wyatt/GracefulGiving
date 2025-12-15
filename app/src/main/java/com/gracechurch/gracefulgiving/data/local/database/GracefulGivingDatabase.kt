@@ -1,7 +1,10 @@
 package com.gracechurch.gracefulgiving.data.local.database
 
+import androidx.room.AutoMigration
 import androidx.room.Database
+import androidx.room.DeleteColumn
 import androidx.room.RoomDatabase
+import androidx.room.migration.AutoMigrationSpec
 import com.gracechurch.gracefulgiving.data.local.dao.BatchDao
 import com.gracechurch.gracefulgiving.data.local.dao.CheckImageDao
 import com.gracechurch.gracefulgiving.data.local.dao.DonationDao
@@ -25,7 +28,10 @@ import com.gracechurch.gracefulgiving.data.local.entity.UserEntity
         FundEntity::class
     ],
     version = 3,
-    exportSchema = false
+    exportSchema = true,
+    autoMigrations = [
+//        AutoMigration (from = 2, to = 3, spec = GracefulGivingDatabase.Migration3To4::class)
+    ]
 )
 abstract class GracefulGivingDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
@@ -34,4 +40,7 @@ abstract class GracefulGivingDatabase : RoomDatabase() {
     abstract fun donationDao(): DonationDao
     abstract fun checkImageDao(): CheckImageDao
     abstract fun fundDao(): FundDao
+
+    @DeleteColumn(tableName = "donors", columnName = "address")
+    class Migration3To4 : AutoMigrationSpec
 }

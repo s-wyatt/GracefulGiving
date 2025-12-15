@@ -2,8 +2,8 @@ package com.gracechurch.gracefulgiving.ui.batch
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.gracechurch.gracefulgiving.data.local.entity.DonationEntity
 import com.gracechurch.gracefulgiving.data.local.relations.BatchWithDonations
+import com.gracechurch.gracefulgiving.domain.model.Donation
 import com.gracechurch.gracefulgiving.domain.model.Fund
 import com.gracechurch.gracefulgiving.domain.model.ScannedCheckData
 import com.gracechurch.gracefulgiving.domain.repository.BatchRepository
@@ -61,7 +61,7 @@ class BatchEntryViewModel @Inject constructor(
         }
     }
 
-    fun updateDonation(donation: DonationEntity) {
+    fun updateDonation(donation: Donation) {
         viewModelScope.launch {
             batchRepository.updateDonation(donation)
         }

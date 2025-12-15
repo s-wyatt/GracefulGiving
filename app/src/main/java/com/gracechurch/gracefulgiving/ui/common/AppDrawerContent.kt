@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.List
@@ -61,16 +60,6 @@ fun AppDrawerContent(navController: NavController, closeDrawer: () -> Unit) {
         selected = false,
         onClick = {
             navController.navigate(Routes.DONORS_DONATIONS)
-            closeDrawer()
-        }
-    )
-
-    NavigationDrawerItem(
-        label = { Text("Banks", style = itemTextStyle) },
-        icon = { Icon(Icons.Default.AccountBalance, contentDescription = "Banks") },
-        selected = false,
-        onClick = {
-            navController.navigate(Routes.BANK_SETTINGS)
             closeDrawer()
         }
     )

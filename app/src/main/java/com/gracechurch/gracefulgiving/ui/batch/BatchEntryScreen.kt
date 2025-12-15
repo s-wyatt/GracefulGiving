@@ -1,12 +1,6 @@
 package com.gracechurch.gracefulgiving.ui.batch
 
 import android.Manifest
-import android.view.ViewGroup
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.Preview
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -22,24 +16,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
-import com.gracechurch.gracefulgiving.data.local.entity.DonationEntity
 import com.gracechurch.gracefulgiving.data.local.relations.DonationWithDonor
+import com.gracechurch.gracefulgiving.data.mappers.toDomain
+import com.gracechurch.gracefulgiving.domain.model.Donation
 import com.gracechurch.gracefulgiving.domain.model.Fund
 import com.gracechurch.gracefulgiving.domain.model.ScannedCheckData
-import com.gracechurch.gracefulgiving.util.CheckImageAnalyzer
 import com.gracechurch.gracefulgiving.util.openPdf
 import com.gracechurch.gracefulgiving.util.printDepositSlip
-import java.util.concurrent.Executors
 
 @Composable
 fun BatchEntryScreen(
@@ -48,8 +36,8 @@ fun BatchEntryScreen(
 ) {
     val state by vm.uiState.collectAsState()
     var showAddDonationDialog by remember { mutableStateOf(false) }
-    var showDeleteDonationDialog by remember { mutableStateOf<DonationEntity?>(null) }
-    var showEditDonationDialog by remember { mutableStateOf<DonationEntity?>(null) }
+    var showDeleteDonationDialog by remember { mutableStateOf<Donation?>(null) }
+    var showEditDonationDialog by remember { mutableStateOf<Donation?>(null) }
     var showScanner by remember { mutableStateOf(false) }
     var showDepositSlip by remember { mutableStateOf(false) }
     var showCloseConfirmation by remember { mutableStateOf(false) }
@@ -149,10 +137,10 @@ fun BatchEntryScreen(
                                 Text(donationText)
                             }
                             if (!isBatchClosed) {
-                                IconButton(onClick = { showEditDonationDialog = donationWithDonor.donation }) {
+                                IconButton(onClick = { showEditDonationDialog = donationWithDonor.donation.toDomain() }) {
                                     Icon(Icons.Default.Edit, contentDescription = "Edit Donation")
                                 }
-                                IconButton(onClick = { showDeleteDonationDialog = donationWithDonor.donation }) {
+                                IconButton(onClick = { showDeleteDonationDialog = donationWithDonor.donation.toDomain() }) {
                                     Icon(Icons.Default.Delete, contentDescription = "Delete Donation")
                                 }
                             }
@@ -305,7 +293,7 @@ fun DepositSlipDialog(
 @Composable
 fun DonationEntryDialog(
     scannedData: ScannedCheckData? = null,
-    donation: DonationEntity? = null,
+    donation: Donation? = null,
     batchId: Long,
     onDismiss: () -> Unit,
     onSave: (firstName: String, lastName: String, checkNumber: String, amount: Double, date: Long, image: String?) -> Unit
@@ -365,5 +353,3 @@ fun DonationEntryDialog(
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
 }
-
-

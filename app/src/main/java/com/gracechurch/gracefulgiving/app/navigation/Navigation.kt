@@ -8,6 +8,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.gracechurch.gracefulgiving.ui.batch.BatchEntryScreen
 import com.gracechurch.gracefulgiving.ui.batch.BatchSelectionScreen
+import com.gracechurch.gracefulgiving.ui.donation.DonationScreen
+import com.gracechurch.gracefulgiving.ui.donor.DonorDetailScreen
+import com.gracechurch.gracefulgiving.ui.donor.DonorListScreen
 import com.gracechurch.gracefulgiving.ui.login.LoginScreen
 
 @Composable
@@ -53,6 +56,26 @@ fun AppNavigation() {
             BatchEntryScreen(
                 batchId = batchId // Pass the batchId to the screen
             )
+        }
+
+        composable(Routes.DONORS_DONATIONS) {
+            DonorListScreen(navController)
+        }
+
+        composable(
+            route = "donor_detail/{donorId}",
+            arguments = listOf(navArgument("donorId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val donorId = backStackEntry.arguments?.getLong("donorId") ?: 0L
+            DonorDetailScreen(donorId = donorId, navController = navController)
+        }
+
+        composable(
+            route = "donation/{donationId}",
+            arguments = listOf(navArgument("donationId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val donationId = backStackEntry.arguments?.getLong("donationId") ?: 0L
+            DonationScreen(donationId = donationId, navController = navController)
         }
     }
 }

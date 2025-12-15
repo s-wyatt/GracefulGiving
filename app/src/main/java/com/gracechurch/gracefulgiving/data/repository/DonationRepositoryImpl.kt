@@ -6,9 +6,12 @@ import com.gracechurch.gracefulgiving.data.local.dao.DonorDao
 import com.gracechurch.gracefulgiving.data.local.entity.CheckImageEntity
 import com.gracechurch.gracefulgiving.data.local.entity.DonationEntity
 import com.gracechurch.gracefulgiving.data.local.entity.DonorEntity
+import com.gracechurch.gracefulgiving.data.mappers.toDomain
+import com.gracechurch.gracefulgiving.data.mappers.toEntity
 import com.gracechurch.gracefulgiving.domain.model.Donation
 import com.gracechurch.gracefulgiving.domain.repository.DonationRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import java.util.Calendar
 import javax.inject.Inject
@@ -19,18 +22,22 @@ class DonationRepositoryImpl @Inject constructor(
     private val checkImageDao: CheckImageDao
 ) : DonationRepository {
 
-    // GENTLE FIX: This now returns a Flow and is much cleaner.
-    override fun getAllDonations(): Flow<List<Donation>> {
+    override fun getAllDonations(): Flow<List<Donation>> { // Return Flow<List<Donation>>
         return donationDao.getAllDonations().map { entities ->
-            entities.map { mapEntityToDomain(it) }
+            entities.map { it.toDomain() } // <-- Use the extension function
         }
     }
 
-    // GENTLE FIX: This also returns a Flow now.
-    override fun getDonationsByDonor(donorId: Long): Flow<List<Donation>> {
+
+    override fun getDonationsByDonor(donorId: Long): Flow<List<Donation>> { // Return Flow<List<Donation>>
         return donationDao.getDonationsByDonor(donorId).map { entities ->
-            entities.map { mapEntityToDomain(it) }
+            entities.map { it.toDomain() } // <-- Use the extension function
         }
+    }
+    override suspend fun getDonationById(id: Long): Donation? { // Return Donation?
+        // Collect the first item from the Flow and map it.
+        val donationEntity = donationDao.getDonationById(id).firstOrNull()
+        return donationEntity?.toDomain() // <-- Use the extension function
     }
 
     override suspend fun addDonation(
@@ -77,8 +84,8 @@ class DonationRepositoryImpl @Inject constructor(
         donationDao.deleteDonationById(donationId)
     }
 
-    override suspend fun updateDonation(donation: DonationEntity) {
-        donationDao.updateDonation(donation)
+    override suspend fun updateDonation(donation: Donation) {
+        donationDao.updateDonation(donation.toEntity())
     }
 
     override suspend fun getMonthToDateTotal(): Double {
@@ -107,19 +114,4 @@ class DonationRepositoryImpl @Inject constructor(
         return donationDao.getTotalBetweenDates(startDate, endDate) ?: 0.0
     }
 
-    /**
-     * Private helper function to map a DonationEntity from the data layer
-     * to a Donation model for the domain/UI layer.
-     */
-    private fun mapEntityToDomain(donationEntity: DonationEntity): Donation {
-        return Donation(
-            donationId = donationEntity.donationId,
-            donorId = donationEntity.donorId,
-            checkAmount = donationEntity.checkAmount,
-            checkDate = donationEntity.checkDate,
-            checkNumber = donationEntity.checkNumber,
-            checkImage = donationEntity.checkImage,
-            fundId = donationEntity.fundId
-        )
-    }
 }

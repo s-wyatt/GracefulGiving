@@ -2,8 +2,9 @@ package com.gracechurch.gracefulgiving.data.repository
 
 import com.gracechurch.gracefulgiving.data.local.dao.BatchDao
 import com.gracechurch.gracefulgiving.data.local.entity.BatchEntity
-import com.gracechurch.gracefulgiving.data.local.entity.DonationEntity
 import com.gracechurch.gracefulgiving.data.local.relations.BatchWithDonations
+import com.gracechurch.gracefulgiving.data.mappers.toDomain // <-- IMPORT THE MAPPER
+import com.gracechurch.gracefulgiving.domain.model.Donation
 import com.gracechurch.gracefulgiving.domain.repository.BatchRepository
 import com.gracechurch.gracefulgiving.domain.repository.DonationRepository
 import com.gracechurch.gracefulgiving.ui.dashboard.BatchInfo
@@ -60,7 +61,7 @@ class BatchRepositoryImpl @Inject constructor(
         donationRepo.deleteDonation(donationId)
     }
 
-    override suspend fun updateDonation(donation: DonationEntity) {
+    override suspend fun updateDonation(donation: Donation) {
         donationRepo.updateDonation(donation)
     }
 
