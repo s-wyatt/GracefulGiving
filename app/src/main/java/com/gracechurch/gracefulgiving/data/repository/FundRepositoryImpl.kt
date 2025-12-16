@@ -29,7 +29,7 @@ class FundRepositoryImpl @Inject constructor(
 
 fun Fund.toEntity(): FundEntity {
     return FundEntity(
-        fundId = this.fundId,
+        fundId = this.fundId ?: 0,
         name = this.name,
         bankName = this.bankName,
         accountName = this.accountName,

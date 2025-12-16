@@ -29,6 +29,12 @@ interface UserDao {
     @Delete
     suspend fun deleteUser(user: UserEntity)
 
-    @Query("UPDATE users SET isTemp = 1 WHERE id = :id")
-    suspend fun markTempPasswordUsed(id: Long)
+    @Query("UPDATE users SET passwordHash = :newPasswordHash, isTemp = 0, tempPassword = NULL WHERE id = :userId")
+    suspend fun finalizePasswordChange(userId: Long, newPasswordHash: String)
+
+    @Query("UPDATE users SET isTemp = 1, tempPassword = :tempPassword WHERE id = :userId")
+    suspend fun setTemporaryPassword(userId: Long, tempPassword: String)
+
+    @Query("UPDATE users SET fullName = :fullName, email = :email, avatarUri = :avatarUri WHERE id = :userId")
+    suspend fun updateUserProfile(userId: Long, fullName: String, email: String, avatarUri: String?)
 }

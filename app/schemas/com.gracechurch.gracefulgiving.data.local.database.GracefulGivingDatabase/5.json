@@ -1,12 +1,12 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 3,
-    "identityHash": "21293daac709ab12e7703d651f30789c",
+    "version": 5,
+    "identityHash": "ea87a5569d45d18c2b75f5fac6c711be",
     "entities": [
       {
         "tableName": "users",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `email` TEXT NOT NULL, `username` TEXT NOT NULL, `fullName` TEXT NOT NULL, `passwordHash` TEXT NOT NULL, `role` TEXT NOT NULL, `tempPassword` TEXT, `isTemp` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `createdBy` INTEGER)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `email` TEXT NOT NULL, `username` TEXT NOT NULL, `fullName` TEXT NOT NULL, `avatarUri` TEXT, `passwordHash` TEXT NOT NULL, `role` TEXT NOT NULL, `tempPassword` TEXT, `isTemp` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `createdBy` INTEGER)",
         "fields": [
           {
             "fieldPath": "id",
@@ -31,6 +31,12 @@
             "columnName": "fullName",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "avatarUri",
+            "columnName": "avatarUri",
+            "affinity": "TEXT",
+            "notNull": false
           },
           {
             "fieldPath": "passwordHash",
@@ -444,7 +450,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '21293daac709ab12e7703d651f30789c')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ea87a5569d45d18c2b75f5fac6c711be')"
     ]
   }
 }

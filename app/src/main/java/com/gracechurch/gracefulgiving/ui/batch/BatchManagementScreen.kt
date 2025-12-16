@@ -3,7 +3,6 @@ package com.gracechurch.gracefulgiving.ui.batch
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,26 +20,22 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -54,21 +49,20 @@ import java.io.File
 @Composable
 fun BatchManagementScreen(
     navController: NavController,
-    userId: Long,
     vm: BatchManagementViewModel = hiltViewModel()
 ) {
     val state by vm.uiState.collectAsState()
     val batches = state.filteredAndSorted
     val context = LocalContext.current
-    var showDatePicker by remember { mutableStateOf(false) }
-    val datePickerState = rememberDatePickerState()
+    val textStyle = MaterialTheme.typography.bodyLarge.copy(fontSize = MaterialTheme.typography.bodyLarge.fontSize * 1.7f)
 
     LaunchedEffect(Unit) { vm.loadBatches() }
 
     Scaffold(
+        topBar = { TopAppBar(title = { Text("Batches", style = textStyle) }) },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showDatePicker = true }
+                onClick = { navController.navigate(Routes.BATCH_SELECTION) }
             ) {
                 Icon(Icons.Default.Add, "New Batch")
             }
@@ -83,8 +77,8 @@ fun BatchManagementScreen(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.End
             ) {
-                SortingMenu(state.sortType) { vm.setSortType(it) }
-                FilteringMenu(state.filterType) { vm.setFilterType(it) }
+                SortingMenu(state.sortType, textStyle) { vm.setSortType(it) }
+                FilteringMenu(state.filterType, textStyle) { vm.setFilterType(it) }
             }
 
             if (state.isLoading) {
@@ -92,7 +86,7 @@ fun BatchManagementScreen(
                     CircularProgressIndicator()
                 }
             } else if (batches.isEmpty()) {
-                EmptyState()
+                EmptyState(textStyle)
             } else {
                 LazyColumn(
                     Modifier.fillMaxSize(),
@@ -100,7 +94,7 @@ fun BatchManagementScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {                    items(batches, key = { it.batch.batchId }) { batchWithDonations ->
                         SwipeToDeleteContainer(
-                            onDelete = { vm.deleteBatch(batchWithDonations.batch.batchId, userId) }
+                            onDelete = { vm.deleteBatch(batchWithDonations.batch.batchId) }
                         ) {
                             BatchCard(
                                 batchWithDonations = batchWithDonations,
@@ -112,35 +106,13 @@ fun BatchManagementScreen(
                                 onPrint = { 
                                     val file = printDepositSlip(context, null, batchWithDonations.donations, batchWithDonations.batch.createdOn)
                                     openPdf(context, file)
-                                }
+                                },
+                                textStyle = textStyle
                             )
                         }
                     }
                 }
             }
-        }
-    }
-
-    if (showDatePicker) {
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                TextButton(onClick = { 
-                    showDatePicker = false
-                    vm.createNewBatch(userId, datePickerState.selectedDateMillis ?: System.currentTimeMillis()) { newBatchId ->
-                        navController.navigate("${Routes.BATCH_ENTRY}/$newBatchId")
-                    }
-                }) {
-                    Text("OK")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancel")
-                }
-            }
-        ) {
-            DatePicker(state = datePickerState)
         }
     }
 }
@@ -161,7 +133,8 @@ fun openPdf(context: Context, file: File) {
 fun BatchCard(
     batchWithDonations: BatchWithDonations,
     onEdit: () -> Unit,
-    onPrint: () -> Unit
+    onPrint: () -> Unit,
+    textStyle: androidx.compose.ui.text.TextStyle
 ) {
     Card(
         modifier = Modifier.fillMaxWidth()
@@ -179,29 +152,30 @@ fun BatchCard(
                     .clickable(onClick = onEdit)
                     .padding(end = 8.dp)
             ) {
-                Text("Batch #${batchWithDonations.batch.batchNumber}")
-                Text("Donations: ${batchWithDonations.donations.size}")
-                Text("Total: $${"%.2f".format(batchWithDonations.donations.sumOf { it.donation.checkAmount })}")
+                Text("Batch #${batchWithDonations.batch.batchNumber}", style = textStyle)
+                Text("Donations: ${batchWithDonations.donations.size}", style = textStyle)
+                Text("Total: $${"%.2f".format(batchWithDonations.donations.sumOf { it.donation.checkAmount })}", style = textStyle)
             }
 
             Button(onClick = onPrint) {
-                Text("Print")
+                Text("Print", style = textStyle)
             }
         }
     }
 }
+
 @Composable
-fun SortingMenu(sortType: SortType, setSortType: (SortType) -> Unit) {
+fun SortingMenu(sortType: SortType, textStyle: androidx.compose.ui.text.TextStyle, setSortType: (SortType) -> Unit) {
 
 }
 
 @Composable
-fun FilteringMenu(filterType: FilterType, setFilterType: (FilterType) -> Unit) {
+fun FilteringMenu(filterType: FilterType, textStyle: androidx.compose.ui.text.TextStyle, setFilterType: (FilterType) -> Unit) {
 
 }
 
 @Composable
-fun EmptyState() {
+fun EmptyState(textStyle: androidx.compose.ui.text.TextStyle) {
 
 }
 

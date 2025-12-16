@@ -61,7 +61,15 @@ class BatchSelectionViewModel @Inject constructor(
             _uiState.update { it.copy(error = "Print report not yet implemented") }
         }
     }
-
+    fun deleteBatch(batchId: Long) {
+        viewModelScope.launch {
+            try {
+                batchRepo.deleteBatch(batchId)
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = e.message) }
+            }
+        }
+    }
     fun printDepositSlip(batchId: Long) {
         // TODO: Implement deposit slip printing
         viewModelScope.launch {

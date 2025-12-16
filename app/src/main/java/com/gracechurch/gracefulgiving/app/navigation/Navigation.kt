@@ -20,6 +20,7 @@ fun AppNavigation() {
     NavHost(navController, startDestination = "login") {
         composable("login") {
             LoginScreen(
+                navController = navController,
                 onLoginSuccess = { userId ->
                     // Navigate to batch selection screen with the user's ID
                     navController.navigate("batch_selection/$userId") {

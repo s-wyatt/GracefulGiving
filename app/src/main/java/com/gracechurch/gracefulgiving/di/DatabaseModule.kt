@@ -1,21 +1,20 @@
 package com.gracechurch.gracefulgiving.di
 
-import com.gracechurch.gracefulgiving.data.local.database.GracefulGivingDatabase
-
 import android.content.Context
-import androidx.sqlite.db.SupportSQLiteDatabase
-import com.gracechurch.gracefulgiving.data.local.dao.*
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
+import com.gracechurch.gracefulgiving.BuildConfig
+import com.gracechurch.gracefulgiving.data.local.dao.*
+import com.gracechurch.gracefulgiving.data.local.database.GracefulGivingDatabase
+import com.gracechurch.gracefulgiving.util.PasswordUtils
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import net.sqlcipher.database.SupportFactory
 import javax.inject.Singleton
 
 @Module
@@ -27,35 +26,41 @@ object DatabaseModule {
     fun provideDatabase(
         @ApplicationContext context: Context
     ): GracefulGivingDatabase {
-        return Room.databaseBuilder(
+        val databaseBuilder = Room.databaseBuilder(
             context,
             GracefulGivingDatabase::class.java,
-            "graceful_giving_database"
+            "graceful_giving.db"
         )
+
+        if (!BuildConfig.DEBUG) {
+            val passphrase = "his_grace_is_amazing".toByteArray()
+            val factory = SupportFactory(passphrase)
+            databaseBuilder.openHelperFactory(factory)
+        }
+
+        return databaseBuilder
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onCreate(db: SupportSQLiteDatabase) {
                     super.onCreate(db)
-
-                    // Initialize database with default admin user and funds
-                    CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
-                        // Insert default admin user
-                        val hashedPassword = hashPassword("admin")
+                    // Use runBlocking to ensure this operation completes before any other
+                    // database access can happen. This prevents a race condition on first login.
+                    runBlocking {
+                        val hashedPassword = PasswordUtils.hashPassword("admin")
                         val currentTime = System.currentTimeMillis()
 
                         db.execSQL("""
-                            INSERT INTO users (id, email, username, passwordHash, role, tempPassword, isTemp, createdAt)
-                            VALUES (1, 'admin@gbc.com', 'admin', '$hashedPassword', 'ADMIN', 'admin', 1, $currentTime)
-                        """ )
+                            INSERT INTO users (id, email, username, fullName, passwordHash, role, tempPassword, isTemp, createdAt)
+                            VALUES (1, 'admin@gbc.com', 'admin', 'Admin User', '$hashedPassword', 'ADMIN', 'admin', 1, $currentTime)
+                        """)
 
-                        // Insert default funds
                         db.execSQL("""
                             INSERT INTO funds (fundId, name, bankName, accountName, accountNumber)
                             VALUES (1, 'General Fund', 'Default Bank', 'General Account', '1234567890')
-                        """ )
+                        """)
                         db.execSQL("""
                             INSERT INTO funds (fundId, name, bankName, accountName, accountNumber)
                             VALUES (2, 'Deacons'' Fund', 'Default Bank', 'Deacons Account', '0987654321')
-                        """ )
+                        """)
                     }
                 }
             })
@@ -97,15 +102,5 @@ object DatabaseModule {
     @Singleton
     fun provideFundDao(database: GracefulGivingDatabase): FundDao {
         return database.fundDao()
-    }
-
-    /**
-     * Simple password hashing function
-     * WARNING: This is a basic implementation for development only!
-     * For production, use BCrypt, Argon2, or Android's built-in security libraries
-     */
-    private fun hashPassword(password: String): String {
-        // Basic hash - REPLACE in production with proper hashing
-        return password.hashCode().toString()
     }
 }

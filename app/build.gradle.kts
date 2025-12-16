@@ -27,6 +27,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     compileOptions {
@@ -72,6 +73,7 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
+    implementation(libs.sqlcipher)
 
     // Hilt
     implementation(libs.hilt.android)
@@ -94,4 +96,7 @@ dependencies {
 
     // Coil
     implementation(libs.coil.compose)
+
+    //Data Store
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
 }

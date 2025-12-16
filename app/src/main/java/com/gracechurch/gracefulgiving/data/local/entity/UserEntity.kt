@@ -9,6 +9,8 @@ data class UserEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val email: String,
     val username: String,
+    val fullName: String,
+    val avatarUri: String? = null,
     val passwordHash: String,
     val role: UserRole,
     val tempPassword: String? = null,

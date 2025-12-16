@@ -2,29 +2,39 @@ package com.gracechurch.gracefulgiving.ui.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.gracechurch.gracefulgiving.domain.model.UserRole
+import com.gracechurch.gracefulgiving.domain.repository.BatchRepository
+import com.gracechurch.gracefulgiving.domain.repository.DonationRepository
+import com.gracechurch.gracefulgiving.domain.repository.UserRepository
+import com.gracechurch.gracefulgiving.domain.repository.UserSessionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import com.gracechurch.gracefulgiving.domain.repository.DonationRepository
-import com.gracechurch.gracefulgiving.domain.repository.BatchRepository
 import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
 import java.util.Locale
+import javax.inject.Inject
 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val batchRepository: BatchRepository,
-    private val donationRepository: DonationRepository
+    private val donationRepository: DonationRepository,
+    private val userRepository: UserRepository,
+    private val userSessionRepository: UserSessionRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DashboardUiState())
     val uiState: StateFlow<DashboardUiState> = _uiState
 
-    init { loadDashboardData() }
+    init {
+        loadDashboardData()
+    }
 
     private fun loadDashboardData() = viewModelScope.launch {
+        val currentUser = userSessionRepository.currentUser
+        val user = currentUser?.let { userRepository.getUserById(it.id) }
         val openBatches = batchRepository.getOpenBatches()
         val mtd = donationRepository.getMonthToDateTotal()
         val qtd = donationRepository.getQuarterToDateTotal()
@@ -35,6 +45,8 @@ class DashboardViewModel @Inject constructor(
         val monthLabels = getMonthLabels()
 
         _uiState.value = DashboardUiState(
+            username = user?.username ?: "",
+            userRole = user?.role,
             openBatches = openBatches,
             monthToDateTotal = mtd,
             quarterToDateTotal = qtd,
@@ -88,6 +100,8 @@ class DashboardViewModel @Inject constructor(
 }
 
 data class DashboardUiState(
+    val username: String = "",
+    val userRole: UserRole? = null,
     val openBatches: List<BatchInfo> = emptyList(),
     val monthToDateTotal: Double = 0.0,
     val quarterToDateTotal: Double = 0.0,
@@ -100,5 +114,7 @@ data class DashboardUiState(
 data class BatchInfo(
     val batchId: Long,
     val batchName: String,
-    val total: Double
+    val total: Double,
+    val date: Date,
+    val fundName: String
 )

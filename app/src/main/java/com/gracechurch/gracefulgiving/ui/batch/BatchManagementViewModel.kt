@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.gracechurch.gracefulgiving.data.local.relations.BatchWithDonations
 import com.gracechurch.gracefulgiving.domain.repository.BatchRepository
 import com.gracechurch.gracefulgiving.domain.repository.UserRepository
+import com.gracechurch.gracefulgiving.domain.repository.UserSessionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,7 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class BatchManagementViewModel @Inject constructor(
     private val repository: BatchRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val userSessionRepository: UserSessionRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BatchManagementUiState())
@@ -30,15 +32,17 @@ class BatchManagementViewModel @Inject constructor(
         }
     }
 
-    fun createNewBatch(userId: Long, createdOn: Long, onBatchCreated: (Long) -> Unit) {
+    fun createNewBatch(createdOn: Long, onBatchCreated: (Long) -> Unit) {
         viewModelScope.launch {
+            val userId = userSessionRepository.currentUser?.id ?: return@launch
             val newBatchId = repository.createBatch(userId, createdOn)
             onBatchCreated(newBatchId)
         }
     }
 
-    fun deleteBatch(batchId: Long, userId: Long) {
+    fun deleteBatch(batchId: Long) {
         viewModelScope.launch {
+            val userId = userSessionRepository.currentUser?.id ?: return@launch
             val user = userRepository.getUserById(userId)
             val batch = repository.getBatch(batchId).first()
             if (batch?.batch?.status == "closed" && user?.role?.name != "ADMIN") {

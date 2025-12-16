@@ -27,10 +27,10 @@ import com.gracechurch.gracefulgiving.data.local.entity.UserEntity
         CheckImageEntity::class,
         FundEntity::class
     ],
-    version = 3,
+    version = 5,
     exportSchema = true,
     autoMigrations = [
-//        AutoMigration (from = 2, to = 3, spec = GracefulGivingDatabase.Migration3To4::class)
+        AutoMigration (from = 4, to = 5)
     ]
 )
 abstract class GracefulGivingDatabase : RoomDatabase() {

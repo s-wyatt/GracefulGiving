@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
 fun DashboardScreen(navController: NavController, viewModel: DashboardViewModel = hiltViewModel()) {
@@ -65,12 +67,6 @@ fun DashboardScreen(navController: NavController, viewModel: DashboardViewModel 
                         fontSize = 32.sp
                     ),
                     color = MaterialTheme.colorScheme.primary
-                )
-
-                Text(
-                    text = "Giving Dashboard",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -291,6 +287,9 @@ fun MiniBarChart(values: List<Double>, modifier: Modifier = Modifier) {
 
 @Composable
 fun BatchCard(batch: BatchInfo) {
+    val displayDateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+    val dateStr = displayDateFormat.format(batch.date)
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -311,7 +310,7 @@ fun BatchCard(batch: BatchInfo) {
                     )
                 )
                 Text(
-                    text = "Batch #${batch.batchId}",
+                    text = "$dateStr - ${batch.fundName}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
