@@ -41,8 +41,22 @@ class EditProfileViewModel @Inject constructor(
         _uiState.update { it.copy(email = email, error = null) }
     }
 
-    fun onAvatarChanged(avatarUri: String) {
+    fun onAvatarChanged(avatarType: String) {
+        val avatarUri = when (avatarType) {
+            "male" -> "icon:male"
+            "female" -> "icon:female"
+            "dog" -> "icon:dog"
+            "cat" -> "icon:cat"
+            "coffee" -> "icon:coffee" // Replaced spy with coffee
+            "unicorn" -> "icon:unicorn" // Replaced dunce with unicorn
+            "initials" -> null
+            else -> _uiState.value.avatarUri
+        }
         _uiState.update { it.copy(avatarUri = avatarUri, error = null) }
+    }
+
+    fun onAvatarUriChanged(uri: String) {
+        _uiState.update { it.copy(avatarUri = uri, error = null) }
     }
 
     fun updateProfile() {
@@ -61,7 +75,7 @@ class EditProfileViewModel @Inject constructor(
             )
 
             userRepository.updateUser(updatedUser).onSuccess {
-                userSessionRepository.currentUser = updatedUser
+                userSessionRepository.updateCurrentUser(updatedUser)
                 _uiState.update {
                     it.copy(
                         isLoading = false,

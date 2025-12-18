@@ -9,7 +9,7 @@ import com.gracechurch.gracefulgiving.domain.repository.DonorRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -33,8 +33,9 @@ class DonorDetailViewModel @Inject constructor(
 
     fun loadDonations(donorId: Long) {
         viewModelScope.launch {
-            // Use .first() to get the first emission from the Flow and then assign it
-            _donations.value = donationRepository.getDonationsByDonor(donorId).first()
+            donationRepository.getDonationsByDonor(donorId).collect { donationList ->
+                _donations.value = donationList
+            }
         }
     }
 

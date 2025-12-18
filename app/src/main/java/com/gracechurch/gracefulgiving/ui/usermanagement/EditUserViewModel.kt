@@ -37,6 +37,14 @@ class EditUserViewModel @Inject constructor(
         }
     }
 
+    fun getInitials(fullName: String): String {
+        return fullName.split(' ')
+            .mapNotNull { it.firstOrNull()?.toString() }
+            .take(2)
+            .joinToString("")
+            .uppercase()
+    }
+
     fun onFullNameChanged(fullName: String) {
         _uiState.update { it.copy(fullName = fullName, error = null) }
     }
@@ -50,7 +58,12 @@ class EditUserViewModel @Inject constructor(
     }
 
     fun onAvatarChanged(avatarUri: String) {
-        _uiState.update { it.copy(avatarUri = avatarUri, error = null) }
+        if (avatarUri == "initials") {
+            val initials = getInitials(_uiState.value.fullName)
+            _uiState.update { it.copy(avatarUri = "initials:$initials", error = null) }
+        } else {
+            _uiState.update { it.copy(avatarUri = avatarUri, error = null) }
+        }
     }
 
     fun updateUser() {
@@ -103,4 +116,7 @@ data class EditUserUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val isUserUpdated: Boolean = false
-)
+) {
+    val isAvatarFile: Boolean
+        get() = avatarUri != null && !avatarUri.startsWith("initials:") && !avatarUri.startsWith("icon:")
+}

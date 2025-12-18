@@ -8,5 +8,6 @@ data class User(
     val avatarUri: String? = null,
     val role: UserRole,
     val isTemp: Boolean,
+    val tempPassword: String?,
     val createdAt: Long
 )

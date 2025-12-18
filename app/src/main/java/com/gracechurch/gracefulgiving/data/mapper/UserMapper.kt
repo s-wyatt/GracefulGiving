@@ -7,11 +7,12 @@ fun UserEntity.toUser(): User {
     return User(
         id = id,
         email = email,
-        username = username,
+        username = username ?: "",
         fullName = fullName,
         avatarUri = avatarUri,
         role = role,
         isTemp = isTemp,
+        tempPassword = tempPassword,
         createdAt = createdAt
     )
 }

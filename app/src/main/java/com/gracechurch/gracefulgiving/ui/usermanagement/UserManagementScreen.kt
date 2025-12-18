@@ -43,7 +43,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
@@ -111,6 +110,19 @@ fun UserManagementScreen(
             textStyle = textStyle
         )
     }
+
+    uiState.error?.let {
+        AlertDialog(
+            onDismissRequest = { viewModel.clearError() },
+            title = { Text("Error") },
+            text = { Text(it) },
+            confirmButton = {
+                Button(onClick = { viewModel.clearError() }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -133,11 +145,21 @@ fun UserItem(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = rememberAsyncImagePainter(user.avatarUri ?: Icons.Default.Person),
-                contentDescription = "Avatar",
-                modifier = Modifier.size(40.dp)
-            )
+            // Handle avatar - use Icon for default, Image for actual URIs
+            if (user.avatarUri.isNullOrEmpty() || user.avatarUri == "male" || user.avatarUri == "female") {
+                Icon(
+                    imageVector = if (user.avatarUri == "female") Icons.Default.Face else Icons.Default.Person,
+                    contentDescription = "Avatar",
+                    modifier = Modifier.size(40.dp)
+                )
+            } else {
+                Image(
+                    painter = rememberAsyncImagePainter(user.avatarUri),
+                    contentDescription = "Avatar",
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+
             Spacer(modifier = Modifier.width(16.dp))
             Column(
                 modifier = Modifier.weight(1f)
@@ -174,11 +196,21 @@ fun InviteUserDialog(
         text = {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Image(
-                        painter = rememberAsyncImagePainter(avatarUri ?: Icons.Default.Person),
-                        contentDescription = "Avatar",
-                        modifier = Modifier.size(100.dp)
-                    )
+                    // Handle avatar preview - use Icon for default, Image for actual URIs
+                    if (avatarUri.isNullOrEmpty() || avatarUri == "male" || avatarUri == "female") {
+                        Icon(
+                            imageVector = if (avatarUri == "female") Icons.Default.Face else Icons.Default.Person,
+                            contentDescription = "Avatar",
+                            modifier = Modifier.size(100.dp)
+                        )
+                    } else {
+                        Image(
+                            painter = rememberAsyncImagePainter(avatarUri),
+                            contentDescription = "Avatar",
+                            modifier = Modifier.size(100.dp)
+                        )
+                    }
+
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         Row {

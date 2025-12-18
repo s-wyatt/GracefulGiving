@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -35,13 +36,14 @@ fun BatchSelectionScreen(
     var batchToDelete by remember { mutableStateOf<Long?>(null) }
     var selectedFund by remember { mutableStateOf<Fund?>(null) }
     var expanded by remember { mutableStateOf(false) }
+    var includeClosedBatches by remember { mutableStateOf(false) }
 
     val dateFormat = remember { SimpleDateFormat("MM/dd/yyyy", Locale.getDefault()) }
     var batchDate by remember { mutableStateOf(Date()) }
     var dateText by remember { mutableStateOf(dateFormat.format(batchDate)) }
 
     // Scale factor for all text
-    val textScale = 0.8f
+    val textScale = 1.2f
 
     LaunchedEffect(Unit) {
         vm.loadBatches()
@@ -57,15 +59,16 @@ fun BatchSelectionScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        "Batches",
-                        fontSize = MaterialTheme.typography.titleLarge.fontSize * textScale
-                    )
-                },
+                title = { Text("Batches") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateUp) {
-                        Icon(Icons.Default.Close, "Close")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                    }
+                },
+                actions = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = includeClosedBatches, onCheckedChange = { includeClosedBatches = it })
+                        Text("Include Closed Batches?")
                     }
                 }
             )
@@ -87,7 +90,9 @@ fun BatchSelectionScreen(
                 .fillMaxSize()
                 .padding(pad)
         ) {
-            if (batches.isEmpty()) {
+            val filteredBatches = batches.filter { includeClosedBatches || it.batch.status.lowercase() != "closed" }
+
+            if (filteredBatches.isEmpty()) {
                 Box(
                     Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -114,10 +119,11 @@ fun BatchSelectionScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(batches) { batchWithDonations ->
+                    items(filteredBatches) { batchWithDonations ->
                         val batch = batchWithDonations.batch
                         val donations = batchWithDonations.donations
                         val totalAmount = donations.sumOf { it.donation.checkAmount }
+                        val fund = funds.find { it.fundId == batch.fundId }
                         val displayDateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
                         val dateStr = displayDateFormat.format(Date(batch.createdOn))
 
@@ -138,7 +144,7 @@ fun BatchSelectionScreen(
                                             )
                                         )
                                         Text(
-                                            dateStr,
+                                            "$dateStr - ${fund?.name ?: "Unknown Fund"} - ${batch.status}",
                                             style = MaterialTheme.typography.bodySmall.copy(
                                                 fontSize = MaterialTheme.typography.bodySmall.fontSize * textScale
                                             )

@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+    <!-- Required to interact with content providers from other apps on Android 11+ -->
+    <queries>
+        <package android:name="com.microsoft.office.officemobile.word" />
+        <provider android:authorities="com.microsoft.office.officemobile.word" />
+    </queries>
+
     <application
         android:name="com.gracechurch.gracefulgiving.GracefulGivingApplication"
         android:allowBackup="true"
@@ -24,6 +36,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
@@ -34,7 +51,5 @@
                 android:resource="@xml/file_paths" />
         </provider>
     </application>
-    <uses-feature android:name="android.hardware.camera" android:required="false" />
-    <uses-permission android:name="android.permission.CAMERA" />
 
 </manifest>

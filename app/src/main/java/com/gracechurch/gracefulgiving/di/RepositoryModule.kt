@@ -6,16 +6,19 @@ import com.gracechurch.gracefulgiving.data.repository.DonationRepositoryImpl
 import com.gracechurch.gracefulgiving.data.repository.DonorRepositoryImpl
 import com.gracechurch.gracefulgiving.data.repository.FundRepositoryImpl
 import com.gracechurch.gracefulgiving.data.repository.UserRepositoryImpl
+import com.gracechurch.gracefulgiving.data.repository.UserSessionRepositoryImpl
 import com.gracechurch.gracefulgiving.domain.repository.AuthRepository
 import com.gracechurch.gracefulgiving.domain.repository.BatchRepository
 import com.gracechurch.gracefulgiving.domain.repository.DonationRepository
 import com.gracechurch.gracefulgiving.domain.repository.DonorRepository
 import com.gracechurch.gracefulgiving.domain.repository.FundRepository
 import com.gracechurch.gracefulgiving.domain.repository.UserRepository
+import com.gracechurch.gracefulgiving.domain.repository.UserSessionRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -50,4 +53,10 @@ abstract class RepositoryModule {
     abstract fun bindFundRepository(
         fundRepositoryImpl: FundRepositoryImpl
     ): FundRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindUserSessionRepository(
+        userSessionRepositoryImpl: UserSessionRepositoryImpl
+    ): UserSessionRepository
 }

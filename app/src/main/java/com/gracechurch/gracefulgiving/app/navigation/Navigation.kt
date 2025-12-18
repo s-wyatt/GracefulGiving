@@ -55,7 +55,8 @@ fun AppNavigation() {
         ) { backStackEntry ->
             val batchId = backStackEntry.arguments?.getLong("batchId") ?: 0L
             BatchEntryScreen(
-                batchId = batchId // Pass the batchId to the screen
+                batchId = batchId,
+                onBack = { navController.popBackStack() }
             )
         }
 

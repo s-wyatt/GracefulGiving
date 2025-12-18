@@ -1,51 +1,61 @@
 package com.gracechurch.gracefulgiving.data.repository
 
-import com.gracechurch.gracefulgiving.data.local.dao.UserDao
 import com.gracechurch.gracefulgiving.domain.model.User
 import com.gracechurch.gracefulgiving.domain.repository.AuthRepository
+import com.gracechurch.gracefulgiving.domain.repository.UserRepository
 import com.gracechurch.gracefulgiving.domain.repository.UserSessionRepository
-import com.gracechurch.gracefulgiving.util.PasswordUtils
 import javax.inject.Inject
 
 class AuthRepositoryImpl @Inject constructor(
-    private val userDao: UserDao,
-    private val userSessionRepository: UserSessionRepository
+    private val userRepository: UserRepository,
+    private val userSessionRepository: UserSessionRepository // Use the interface
 ) : AuthRepository {
 
     override suspend fun login(username: String, password: String): Result<User> {
-        // 1. Fetch user by username. If not found, login fails.
-        val userEntity = userDao.getUserByUsername(username)
-            ?: return Result.failure(Exception("Invalid username or password"))
+        return try {
+            val authenticatedUser = userRepository.authenticateUser(username, password)
 
-        // 2. Determine if the password is valid based on the 'isTemp' flag.
-        val passwordValid =
-            if (userEntity.isTemp) {
-                // 3a. If 'isTemp' is true, compare the input password directly
-                // with the plain-text temporary password from the database.
-                password == userEntity.tempPassword
+            if (authenticatedUser != null) {
+                userSessionRepository.updateCurrentUser(authenticatedUser) // Use the correct method
+                Result.success(authenticatedUser)
             } else {
-                // 3b. If 'isTemp' is false, use the secure verification method
-                // to compare the input password with the hashed password.
-                PasswordUtils.verifyPassword(password, userEntity.passwordHash)
+                // To diagnose the "Invalid password" error, let's get the user data
+                val userForDebug = userRepository.getUserByUsername(username)
+                if (userForDebug == null) {
+                    Result.failure(Exception("User not found"))
+                } else {
+                    val debugMessage = "Invalid password. Debug info: isTemp=${userForDebug.isTemp}, tempPwd='${userForDebug.tempPassword}'"
+                    Result.failure(Exception(debugMessage))
+                }
             }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
-        // 4. If the password is valid, create the User session and return success.
-        //    Otherwise, return failure.
-        return if (passwordValid) {
-            val user = User(
-                id = userEntity.id,
-                username = userEntity.username,
-                email = userEntity.email,
-                fullName = userEntity.fullName,
-                avatarUri = userEntity.avatarUri,
-                role = userEntity.role,
-                isTemp = userEntity.isTemp,
-                createdAt = userEntity.createdAt
-            )
-            userSessionRepository.currentUser = user
-            Result.success(user)
-        } else {
-            Result.failure(Exception("Invalid username or password"))
+    override suspend fun logout(): Result<Unit> {
+        return try {
+            // Clear the current user from the session
+            userSessionRepository.logout()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun changePassword(
+        userId: Long,
+        currentPassword: String,
+        newPassword: String
+    ): Result<Unit> {
+        return try {
+            if (!userRepository.verifyValidPassword(userId, currentPassword)) {
+                Result.failure(Exception("Current password is incorrect"))
+            } else {
+                userRepository.updatePassword(userId, newPassword)
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 }

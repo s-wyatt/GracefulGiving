@@ -30,10 +30,10 @@ class UserRepositoryImpl @Inject constructor(
         private val CURRENT_USER_ID_KEY = longPreferencesKey("current_user_id")
     }
 
-    override suspend fun authenticateUser(email: String, password: String): User? {
+    override suspend fun authenticateUser(username: String, password: String): User? {
         return try {
-            val userEntity = userDao.getUserByEmail(email)
-            if (userEntity != null && verifyPassword(password, userEntity.passwordHash)) {
+            val userEntity = userDao.getUserByUsername(username)
+            if (userEntity != null && verifyPassword(password, userEntity)) {
                 // Store current user ID after successful authentication
                 setCurrentUserId(userEntity.id)
                 userEntity.toUser()
@@ -145,6 +145,10 @@ class UserRepositoryImpl @Inject constructor(
     override suspend fun getUserByEmail(email: String): User? {
         return userDao.getUserByEmail(email)?.toUser()
     }
+    
+    override suspend fun getUserByUsername(username: String): User? {
+        return userDao.getUserByUsername(username)?.toUser()
+    }
 
     override suspend fun deleteUser(user: User): Result<Unit> {
         return try {
@@ -158,6 +162,11 @@ class UserRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    override suspend fun verifyValidPassword(userId: Long, password: String): Boolean {
+        val user = userDao.getUserById(userId) ?: return false
+        return verifyPassword(password, user)
     }
 
     // NEW METHODS FOR CURRENT USER
@@ -196,7 +205,11 @@ class UserRepositoryImpl @Inject constructor(
         return password.hashCode().toString()
     }
 
-    private fun verifyPassword(inputPassword: String, storedHash: String): Boolean {
-        return hashPassword(inputPassword) == storedHash
+    private fun verifyPassword(password: String, userEntity: UserEntity): Boolean {
+        return if (userEntity.isTemp) {
+            password == userEntity.tempPassword
+        } else {
+            hashPassword(password) == userEntity.passwordHash
+        }
     }
 }

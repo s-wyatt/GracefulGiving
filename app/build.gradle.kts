@@ -99,4 +99,7 @@ dependencies {
 
     //Data Store
     implementation("androidx.datastore:datastore-preferences:1.0.0")
+
+    // uCrop
+    implementation("com.github.yalantis:ucrop:2.2.8")
 }

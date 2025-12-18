@@ -35,13 +35,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.gracechurch.gracefulgiving.app.navigation.Routes
 import com.gracechurch.gracefulgiving.data.local.relations.BatchWithDonations
-import com.gracechurch.gracefulgiving.util.printDepositSlip
+import com.gracechurch.gracefulgiving.util.printDepositReport
 import java.io.File
 
 
@@ -104,7 +103,7 @@ fun BatchManagementScreen(
                                     }
                                 },
                                 onPrint = { 
-                                    val file = printDepositSlip(context, null, batchWithDonations.donations, batchWithDonations.batch.createdOn)
+                                    val file = printDepositReport(context, null, batchWithDonations.donations, batchWithDonations.batch.createdOn)
                                     openPdf(context, file)
                                 },
                                 textStyle = textStyle

@@ -6,7 +6,7 @@ import com.gracechurch.gracefulgiving.domain.model.UserRole
 interface UserRepository {
 
     suspend fun authenticateUser(
-        email: String,
+        username: String,
         password: String
     ): User?
 
@@ -38,6 +38,8 @@ interface UserRepository {
 
     suspend fun getUserByEmail(email: String): User?
 
+    suspend fun getUserByUsername(username: String): User?
+
     suspend fun deleteUser(user: User): Result<Unit>
     // Add this method
     suspend fun getCurrentUser(): User?
@@ -46,4 +48,6 @@ interface UserRepository {
     suspend fun setCurrentUserId(userId: Long)
 
     suspend fun clearCurrentUser()
+
+    suspend fun verifyValidPassword(userId: Long, password: String): Boolean
 }

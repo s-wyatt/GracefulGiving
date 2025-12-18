@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.DrawerValue
@@ -29,6 +28,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.gracechurch.gracefulgiving.app.navigation.Routes
 import com.gracechurch.gracefulgiving.domain.model.UserRole
+import com.gracechurch.gracefulgiving.ui.components.UserAvatar
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,6 +42,14 @@ fun MainScaffold(
     val scope = rememberCoroutineScope()
     var showMenu by remember { mutableStateOf(false) }
     val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(uiState.isLoggedOut) {
+        if (uiState.isLoggedOut) {
+            navController.navigate(Routes.LOGIN) {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -82,9 +90,10 @@ fun MainScaffold(
                                 Log.d("MainScaffold", "Profile menu clicked")
                                 showMenu = !showMenu 
                             }) {
-                                Icon(
-                                    imageVector = Icons.Default.Person,
-                                    contentDescription = "Profile"
+                                UserAvatar(
+                                    avatarUri = uiState.avatarUri,
+                                    fullName = uiState.fullName,
+                                    size = 32.dp
                                 )
                             }
                         }
@@ -118,6 +127,14 @@ fun MainScaffold(
                                     }
                                 )
                             }
+                            DropdownMenuItem(
+                                text = { Text("Logout") },
+                                onClick = {
+                                    Log.d("MainScaffold", "Logout clicked")
+                                    viewModel.logout()
+                                    showMenu = false
+                                }
+                            )
                         }
                     }
                 )

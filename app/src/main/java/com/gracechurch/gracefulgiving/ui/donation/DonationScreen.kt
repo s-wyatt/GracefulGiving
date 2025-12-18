@@ -1,5 +1,6 @@
 package com.gracechurch.gracefulgiving.ui.donation
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,6 +28,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.compose.ui.graphics.asImageBitmap
+import base64ToBitmap
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -71,6 +74,21 @@ fun DonationScreen(
                     .padding(paddingValues)
                     .padding(16.dp)
             ) {
+                if (donation.checkImage != null) {
+                    val bitmap = remember(donation.checkImage) {
+                        base64ToBitmap(donation.checkImage!!)
+                    }
+
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = "Check Image",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
                 OutlinedTextField(
                     value = checkNumber,
                     onValueChange = { checkNumber = it },

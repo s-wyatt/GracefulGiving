@@ -49,7 +49,7 @@ fun AppDrawerContent(navController: NavController, closeDrawer: () -> Unit) {
         icon = { Icon(Icons.Default.List, contentDescription = "Batches") },
         selected = false,
         onClick = {
-            navController.navigate(Routes.BATCH_MANAGEMENT)
+            navController.navigate(Routes.BATCH_SELECTION)
             closeDrawer()
         }
     )

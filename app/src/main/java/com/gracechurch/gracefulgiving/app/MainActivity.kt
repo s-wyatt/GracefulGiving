@@ -101,7 +101,10 @@ fun GracefulGivingApp(userSessionRepository: UserSessionRepository) {
             arguments = listOf(navArgument("batchId") { type = NavType.LongType })
         ) { backStackEntry ->
             val batchId = backStackEntry.arguments?.getLong("batchId") ?: 0L
-            MainScaffold(navController) { BatchEntryScreen(batchId = batchId) }
+            MainScaffold(navController) { BatchEntryScreen(
+                batchId = batchId,
+                onBack = { navController.popBackStack() }
+            ) }
         }
 
         composable(

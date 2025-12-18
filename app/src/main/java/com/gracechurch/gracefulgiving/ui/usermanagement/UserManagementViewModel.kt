@@ -37,6 +37,7 @@ class UserManagementViewModel @Inject constructor(
 
     fun inviteUser(invite: InviteUser) {
         viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
             userRepository.createUser(
                 email = invite.email,
                 username = invite.username,
@@ -45,8 +46,16 @@ class UserManagementViewModel @Inject constructor(
                 role = invite.role,
                 tempPassword = invite.tempPassword,
                 avatarUri = invite.avatarUri
-            )
-            loadUsers() // Refresh the user list
+            ).onSuccess {
+                loadUsers() // Refresh the user list
+            }.onFailure { exception ->
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = exception.message ?: "An unknown error occurred"
+                    )
+                }
+            }
         }
     }
 
@@ -55,6 +64,10 @@ class UserManagementViewModel @Inject constructor(
             userRepository.deleteUser(user)
             loadUsers() // Refresh the user list
         }
+    }
+
+    fun clearError() {
+        _uiState.update { it.copy(error = null) }
     }
 }
 
