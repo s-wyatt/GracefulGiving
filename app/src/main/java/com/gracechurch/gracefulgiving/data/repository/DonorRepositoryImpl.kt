@@ -30,6 +30,14 @@ class DonorRepositoryImpl @Inject constructor(
             donorDao.updateDonor(updatedEntity)
         }
     }
+    
+    override suspend fun getDonorByName(firstName: String, lastName: String): Donor? {
+        return donorDao.findDonorByName(firstName, lastName)?.toDomain()
+    }
+
+    override suspend fun createDonor(firstName: String, lastName: String): Long {
+        return donorDao.insertDonor(DonorEntity(firstName = firstName, lastName = lastName))
+    }
 }
 
 private fun DonorEntity.toDomain(): Donor {

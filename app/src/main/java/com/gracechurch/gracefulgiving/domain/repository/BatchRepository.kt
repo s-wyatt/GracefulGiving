@@ -1,8 +1,8 @@
 package com.gracechurch.gracefulgiving.domain.repository
 
 import com.gracechurch.gracefulgiving.data.local.relations.BatchWithDonations
+import com.gracechurch.gracefulgiving.domain.model.BatchInfo
 import com.gracechurch.gracefulgiving.domain.model.Donation
-import com.gracechurch.gracefulgiving.ui.dashboard.BatchInfo // Import the data class
 import kotlinx.coroutines.flow.Flow
 
 interface BatchRepository {

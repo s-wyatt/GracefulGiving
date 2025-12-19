@@ -7,4 +7,5 @@ interface FundRepository {
     suspend fun insertFund(fund: Fund)
     fun getFunds(): Flow<List<Fund>>
     suspend fun getFund(fundId: Long): Fund?
+    suspend fun getAllFundsOneShot(): List<Fund>
 }

@@ -19,4 +19,5 @@ object Routes {
     const val CHANGE_PASSWORD = "change_password"
     const val DONOR_DETAIL = "donor_detail"
     const val DONATION = "donation"
+    const val IMPORT_DONATIONS = "import_donations"
 }

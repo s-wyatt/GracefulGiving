@@ -14,6 +14,8 @@ import com.gracechurch.gracefulgiving.domain.repository.DonorRepository
 import com.gracechurch.gracefulgiving.domain.repository.FundRepository
 import com.gracechurch.gracefulgiving.domain.repository.UserRepository
 import com.gracechurch.gracefulgiving.domain.repository.UserSessionRepository
+import com.gracechurch.gracefulgiving.domain.usecase.ImportDonationsUseCase
+import com.gracechurch.gracefulgiving.domain.usecase.ImportDonationsUseCaseImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -59,4 +61,5 @@ abstract class RepositoryModule {
     abstract fun bindUserSessionRepository(
         userSessionRepositoryImpl: UserSessionRepositoryImpl
     ): UserSessionRepository
+
 }

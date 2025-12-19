@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction  // ADD THIS IMPORT
 import androidx.room.Update
 import com.gracechurch.gracefulgiving.data.local.entity.DonorEntity
 import com.gracechurch.gracefulgiving.data.local.relations.DonorWithDonations
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface DonorDao {
+    @Transaction  // ADD THIS ANNOTATION
     @Query("SELECT * FROM donors")
     fun getAllDonorsWithDonations(): Flow<List<DonorWithDonations>>
 

@@ -50,10 +50,21 @@ class DonationRepositoryImpl @Inject constructor(
         batchId: Long,
         fundId: Long
     ) {
-        // A more robust implementation would check if a donor exists first.
-        val donorId = donorDao.insertDonor(
+        // Check if donor exists or create new
+        var donorId = donorDao.insertDonor(
             DonorEntity(firstName = firstName, lastName = lastName)
         )
+        
+        // If insert returned -1, it means the donor already exists (OnConflictStrategy.IGNORE)
+        if (donorId == -1L) {
+            val existingDonor = donorDao.findDonorByName(firstName, lastName)
+            if (existingDonor != null) {
+                donorId = existingDonor.donorId
+            } else {
+                // This shouldn't typically happen if conflict occurred, but handle gracefully
+                throw IllegalStateException("Could not find or create donor: $firstName $lastName")
+            }
+        }
 
         val donationId = donationDao.insertDonation(
             DonationEntity(

@@ -5,6 +5,7 @@ import com.gracechurch.gracefulgiving.data.local.entity.FundEntity
 import com.gracechurch.gracefulgiving.domain.model.Fund
 import com.gracechurch.gracefulgiving.domain.repository.FundRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
@@ -24,6 +25,10 @@ class FundRepositoryImpl @Inject constructor(
 
     override suspend fun getFund(fundId: Long): Fund? {
         return fundDao.getFund(fundId)?.toModel()
+    }
+    
+    override suspend fun getAllFundsOneShot(): List<Fund> {
+        return fundDao.getFunds().first().map { it.toModel() }
     }
 }
 

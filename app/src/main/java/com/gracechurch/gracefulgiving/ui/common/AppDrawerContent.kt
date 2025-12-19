@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationDrawerItem
@@ -80,6 +81,16 @@ fun AppDrawerContent(navController: NavController, closeDrawer: () -> Unit) {
         selected = false,
         onClick = {
             navController.navigate(Routes.YEARLY_STATEMENTS)
+            closeDrawer()
+        }
+    )
+
+    NavigationDrawerItem(
+        label = { Text("Import", style = itemTextStyle) },
+        icon = { Icon(Icons.Default.UploadFile, contentDescription = "Import") },
+        selected = false,
+        onClick = {
+            navController.navigate(Routes.IMPORT_DONATIONS)
             closeDrawer()
         }
     )

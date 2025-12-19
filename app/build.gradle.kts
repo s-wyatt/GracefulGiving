@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
 }
@@ -16,20 +15,24 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
-        ksp {
-            arg("room.schemaLocation", "$projectDir/schemas")
-        }
+
+        // REMOVE the ksp block from here - it doesn't belong in defaultConfig
     }
+
     buildTypes {
         getByName("debug") {
             isDebuggable = true
         }
     }
+
     buildFeatures {
         compose = true
         buildConfig = true
     }
 
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.11"
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -45,23 +48,27 @@ android {
         }
     }
 }
+
+// KSP configuration - KEEP THIS OUTSIDE the android block
 ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
     arg("room.incremental", "true")
     arg("room.generateKotlin", "true")
 }
+
 dependencies {
     // AndroidX basics
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity.compose)
 
-    // ML Kit Text Recognition - GENTLE FIX: Now using version catalog
+    // ML Kit Text Recognition
     implementation(libs.mlkit.text.recognition)
 
     // Navigation
     implementation(libs.androidx.navigation.compose)
 
-    // Compose BOM - Best Practice: Declare this first among Compose dependencies
+    // Compose BOM
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.graphics)
@@ -83,21 +90,22 @@ dependencies {
     // Material Icons
     implementation(libs.material.icons.extended)
 
-    // CameraX - GENTLE FIX: Now using version catalog
+    // CameraX
     implementation(libs.camerax.core)
     implementation(libs.camerax.camera2)
     implementation(libs.camerax.lifecycle)
     implementation(libs.camerax.view)
 
-    // JUnit
-    testImplementation("junit:junit:4.13.2")
+    // Testing
+    testImplementation(libs.junit)
 
+    // Accompanist
     implementation(libs.accompanist.permissions)
 
     // Coil
     implementation(libs.coil.compose)
 
-    //Data Store
+    // DataStore
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 
     // uCrop

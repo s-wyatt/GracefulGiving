@@ -9,8 +9,12 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface FundDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertFund(fund: FundEntity)
+
+    @Query("SELECT * FROM funds WHERE name = :name LIMIT 1")
+    suspend fun findFundByName(name: String): FundEntity?
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertFund(fund: FundEntity): Long
 
     @Query("SELECT * FROM funds")
     fun getFunds(): Flow<List<FundEntity>>

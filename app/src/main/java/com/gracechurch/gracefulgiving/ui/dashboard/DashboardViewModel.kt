@@ -2,6 +2,7 @@ package com.gracechurch.gracefulgiving.ui.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.gracechurch.gracefulgiving.domain.model.BatchInfo
 import com.gracechurch.gracefulgiving.domain.model.UserRole
 import com.gracechurch.gracefulgiving.domain.repository.BatchRepository
 import com.gracechurch.gracefulgiving.domain.repository.DonationRepository
@@ -13,7 +14,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
 
@@ -109,12 +109,4 @@ data class DashboardUiState(
     val last12MonthsTotals: List<Double> = emptyList(),
     val oldestMonthLabel: String = "",
     val currentMonthLabel: String = ""
-)
-
-data class BatchInfo(
-    val batchId: Long,
-    val batchName: String,
-    val total: Double,
-    val date: Date,
-    val fundName: String
 )

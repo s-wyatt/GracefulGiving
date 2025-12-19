@@ -4,11 +4,11 @@ import com.gracechurch.gracefulgiving.data.local.dao.BatchDao
 import com.gracechurch.gracefulgiving.data.local.dao.FundDao
 import com.gracechurch.gracefulgiving.data.local.entity.BatchEntity
 import com.gracechurch.gracefulgiving.data.local.relations.BatchWithDonations
-import com.gracechurch.gracefulgiving.data.mappers.toDomain // <-- IMPORT THE MAPPER
+import com.gracechurch.gracefulgiving.data.mappers.toDomain
+import com.gracechurch.gracefulgiving.domain.model.BatchInfo
 import com.gracechurch.gracefulgiving.domain.model.Donation
 import com.gracechurch.gracefulgiving.domain.repository.BatchRepository
 import com.gracechurch.gracefulgiving.domain.repository.DonationRepository
-import com.gracechurch.gracefulgiving.ui.dashboard.BatchInfo
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -73,7 +73,10 @@ class BatchRepositoryImpl @Inject constructor(
 
     override suspend fun getOpenBatches(): List<BatchInfo> = coroutineScope {
         val batchesWithDonations = dao.getAllBatchesWithDonations().first()
-        batchesWithDonations.map { batchWithDonations ->
+        // Filter for open batches if needed (assuming "open" is status)
+        val openBatches = batchesWithDonations.filter { it.batch.status == "open" }
+        
+        openBatches.map { batchWithDonations ->
             async {
                 val fund = fundDao.getFund(batchWithDonations.batch.fundId)
                 BatchInfo(

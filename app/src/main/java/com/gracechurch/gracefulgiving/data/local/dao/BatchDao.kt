@@ -2,6 +2,7 @@ package com.gracechurch.gracefulgiving.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import com.gracechurch.gracefulgiving.data.local.entity.BatchEntity
@@ -11,7 +12,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface BatchDao {
 
-    @Insert
+    @Query("SELECT COALESCE(MAX(batchNumber), 0) + 1 FROM batches")
+    suspend fun getNextBatchNumber(): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBatch(batch: BatchEntity): Long
 
     @Transaction

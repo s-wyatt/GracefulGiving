@@ -60,7 +60,7 @@ fun AppNavigation() {
             )
         }
 
-        composable(Routes.DONORS_DONATIONS) {
+        composable(Routes.DONORS) {
             DonorListScreen(navController)
         }
 

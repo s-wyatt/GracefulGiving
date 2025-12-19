@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.gracechurch.gracefulgiving.domain.model.BatchInfo
 import java.text.SimpleDateFormat
 import java.util.Locale
 
