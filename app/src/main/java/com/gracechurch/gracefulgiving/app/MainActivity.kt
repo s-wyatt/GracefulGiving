@@ -10,6 +10,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.gracechurch.gracefulgiving.app.navigation.Routes
 import com.gracechurch.gracefulgiving.domain.repository.UserSessionRepository
+import com.gracechurch.gracefulgiving.domain.usecase.ExportDonationsUseCase
 import com.gracechurch.gracefulgiving.domain.usecase.ImportDonationsUseCase
 import com.gracechurch.gracefulgiving.ui.batch.BatchEntryScreen
 import com.gracechurch.gracefulgiving.ui.batch.BatchManagementScreen
@@ -19,6 +20,7 @@ import com.gracechurch.gracefulgiving.ui.dashboard.DashboardScreen
 import com.gracechurch.gracefulgiving.ui.donation.DonationScreen
 import com.gracechurch.gracefulgiving.ui.donor.DonorDetailScreen
 import com.gracechurch.gracefulgiving.ui.donor.DonorListScreen
+import com.gracechurch.gracefulgiving.ui.export.ExportDonationsScreen
 import com.gracechurch.gracefulgiving.ui.fund.FundManagementScreen
 import com.gracechurch.gracefulgiving.ui.import.ImportDonationsScreen
 import com.gracechurch.gracefulgiving.ui.login.ForgotPasswordScreen
@@ -37,6 +39,7 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var userSessionRepository: UserSessionRepository
     @Inject lateinit var importDonationsUseCase: ImportDonationsUseCase
+    @Inject lateinit var exportDonationsUseCase: ExportDonationsUseCase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,6 +75,15 @@ class MainActivity : ComponentActivity() {
                             ImportDonationsScreen(
                                 importDonationsUseCase = importDonationsUseCase,
                                 userSessionRepository = userSessionRepository
+                            )
+                        }
+                    }
+
+                    composable(Routes.EXPORT_DONATIONS) {
+                        MainScaffold(navController) {
+                            ExportDonationsScreen(
+                                onNavigateUp = { navController.popBackStack() },
+                                exportDonationsUseCase = exportDonationsUseCase
                             )
                         }
                     }

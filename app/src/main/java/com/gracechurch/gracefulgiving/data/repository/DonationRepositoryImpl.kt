@@ -8,7 +8,9 @@ import com.gracechurch.gracefulgiving.data.local.entity.DonationEntity
 import com.gracechurch.gracefulgiving.data.local.entity.DonorEntity
 import com.gracechurch.gracefulgiving.data.mappers.toDomain
 import com.gracechurch.gracefulgiving.data.mappers.toEntity
+import com.gracechurch.gracefulgiving.data.mappers.toDonationListItem
 import com.gracechurch.gracefulgiving.domain.model.Donation
+import com.gracechurch.gracefulgiving.domain.model.DonationListItem
 import com.gracechurch.gracefulgiving.domain.repository.DonationRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
@@ -22,22 +24,25 @@ class DonationRepositoryImpl @Inject constructor(
     private val checkImageDao: CheckImageDao
 ) : DonationRepository {
 
-    override fun getAllDonations(): Flow<List<Donation>> { // Return Flow<List<Donation>>
+    override fun getAllDonations(): Flow<List<DonationListItem>> {
         return donationDao.getAllDonations().map { entities ->
-            entities.map { it.toDomain() } // <-- Use the extension function
+            entities.map { it.toDonationListItem() }
         }
     }
 
-
-    override fun getDonationsByDonor(donorId: Long): Flow<List<Donation>> { // Return Flow<List<Donation>>
+    override fun getDonationsByDonor(donorId: Long): Flow<List<DonationListItem>> {
         return donationDao.getDonationsByDonor(donorId).map { entities ->
-            entities.map { it.toDomain() } // <-- Use the extension function
+            entities.map { it.toDonationListItem() }
         }
     }
-    override suspend fun getDonationById(id: Long): Donation? { // Return Donation?
-        // Collect the first item from the Flow and map it.
-        val donationEntity = donationDao.getDonationById(id).firstOrNull()
-        return donationEntity?.toDomain() // <-- Use the extension function
+
+    override suspend fun getCheckImageById(donationId: Long): String? {
+        return donationDao.getCheckImageById(donationId)
+    }
+
+    override suspend fun getDonationById(id: Long): Donation? {
+        val donationListItem = donationDao.getDonationListItemById(id).firstOrNull()
+        return donationListItem?.toDomain()
     }
 
     override suspend fun addDonation(
@@ -48,27 +53,32 @@ class DonationRepositoryImpl @Inject constructor(
         date: Long,
         image: String?,
         batchId: Long,
-        fundId: Long
+        fundId: Long,
+        donorId: Long?
     ) {
-        // Check if donor exists or create new
-        var donorId = donorDao.insertDonor(
-            DonorEntity(firstName = firstName, lastName = lastName)
-        )
-        
-        // If insert returned -1, it means the donor already exists (OnConflictStrategy.IGNORE)
-        if (donorId == -1L) {
-            val existingDonor = donorDao.findDonorByName(firstName, lastName)
-            if (existingDonor != null) {
-                donorId = existingDonor.donorId
-            } else {
-                // This shouldn't typically happen if conflict occurred, but handle gracefully
-                throw IllegalStateException("Could not find or create donor: $firstName $lastName")
+        val finalDonorId: Long
+
+        if (donorId != null) {
+            finalDonorId = donorId
+        } else {
+            var newDonorId = donorDao.insertDonor(
+                DonorEntity(firstName = firstName, lastName = lastName)
+            )
+
+            if (newDonorId == -1L) {
+                val existingDonor = donorDao.findDonorByName(firstName, lastName)
+                if (existingDonor != null) {
+                    newDonorId = existingDonor.donorId
+                } else {
+                    throw IllegalStateException("Could not find or create donor: $firstName $lastName")
+                }
             }
+            finalDonorId = newDonorId
         }
 
         val donationId = donationDao.insertDonation(
             DonationEntity(
-                donorId = donorId,
+                donorId = finalDonorId,
                 batchId = batchId,
                 checkNumber = checkNumber,
                 checkAmount = amount,
@@ -83,12 +93,16 @@ class DonationRepositoryImpl @Inject constructor(
                 CheckImageEntity(
                     donationId = donationId,
                     batchId = batchId,
-                    donorId = donorId,
+                    donorId = finalDonorId,
                     imageData = image,
                     capturedAt = System.currentTimeMillis()
                 )
             )
         }
+    }
+
+    override suspend fun moveDonations(sourceDonorId: Long, destinationDonorId: Long) {
+        donationDao.moveDonations(sourceDonorId, destinationDonorId)
     }
 
     override suspend fun deleteDonation(donationId: Long) {
@@ -121,6 +135,7 @@ class DonationRepositoryImpl @Inject constructor(
         val firstDayOfYear = cal.apply { set(Calendar.DAY_OF_YEAR, 1) }.timeInMillis
         return donationDao.getTotalDonationsSince(firstDayOfYear) ?: 0.0
     }
+
     override suspend fun getTotalBetweenDates(startDate: Long, endDate: Long): Double {
         return donationDao.getTotalBetweenDates(startDate, endDate) ?: 0.0
     }

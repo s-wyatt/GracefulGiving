@@ -1,12 +1,13 @@
 package com.gracechurch.gracefulgiving.domain.repository
 
 import com.gracechurch.gracefulgiving.domain.model.Donation
+import com.gracechurch.gracefulgiving.domain.model.DonationListItem
 import kotlinx.coroutines.flow.Flow
 
 interface DonationRepository {
-    // GENTLE FIX: Return a Flow to allow reactive updates in the ViewModel.
-    fun getAllDonations(): Flow<List<Donation>>
-    fun getDonationsByDonor(donorId: Long): Flow<List<Donation>>
+    fun getAllDonations(): Flow<List<DonationListItem>>
+    fun getDonationsByDonor(donorId: Long): Flow<List<DonationListItem>>
+    suspend fun getCheckImageById(donationId: Long): String?
 
     suspend fun addDonation(
         firstName: String,
@@ -16,9 +17,11 @@ interface DonationRepository {
         date: Long,
         image: String?,
         batchId: Long,
-        fundId: Long = 1
+        fundId: Long = 1,
+        donorId: Long? = null
     )
 
+    suspend fun moveDonations(sourceDonorId: Long, destinationDonorId: Long)
     suspend fun deleteDonation(donationId: Long)
     suspend fun updateDonation(donation: Donation)
     suspend fun getDonationById(id: Long): Donation?

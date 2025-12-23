@@ -1,7 +1,17 @@
 package com.gracechurch.gracefulgiving.ui.batch
 
+import android.app.DatePickerDialog
+import android.graphics.Bitmap
+import android.util.Log
+import android.widget.DatePicker
+import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,29 +19,36 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -43,19 +60,32 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
+import base64ToBitmap
 import com.gracechurch.gracefulgiving.data.local.relations.DonationWithDonor
 import com.gracechurch.gracefulgiving.data.mappers.toDomain
 import com.gracechurch.gracefulgiving.domain.model.Donation
+import com.gracechurch.gracefulgiving.domain.model.Donor
 import com.gracechurch.gracefulgiving.domain.model.Fund
 import com.gracechurch.gracefulgiving.domain.model.ScannedCheckData
 import com.gracechurch.gracefulgiving.util.openPdf
 import com.gracechurch.gracefulgiving.util.printDepositReport
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,6 +114,33 @@ fun BatchEntryScreen(
     val totalAmountText = "$${"%.2f".format(totalAmount)}"
     val isBatchClosed = batchWithDonations?.batch?.status == "closed"
     val fund = state.fund
+    val funds = state.funds
+    val matchedDonor = state.matchedDonor
+
+    // State for editable batch fields
+    var batchDate by remember(batchWithDonations) { mutableStateOf(batchWithDonations?.batch?.createdOn ?: System.currentTimeMillis()) }
+    var selectedFundId by remember(batchWithDonations) { mutableStateOf(batchWithDonations?.batch?.fundId) }
+    var fundDropdownExpanded by remember { mutableStateOf(false) }
+
+    val dateFormat = SimpleDateFormat("MM/dd/yyyy", Locale.US)
+    val calendar = Calendar.getInstance().apply { timeInMillis = batchDate }
+
+    val datePickerDialog = DatePickerDialog(
+        context,
+        { _: DatePicker, year: Int, month: Int, day: Int ->
+            val newDateCal = Calendar.getInstance().apply {
+                set(year, month, day)
+            }
+            batchDate = newDateCal.timeInMillis
+            // Update batch date immediately
+             selectedFundId?.let { fid ->
+                vm.updateBatchDetails(batchId, batchDate, fid)
+            }
+        },
+        calendar.get(Calendar.YEAR),
+        calendar.get(Calendar.MONTH),
+        calendar.get(Calendar.DAY_OF_MONTH)
+    )
 
     Scaffold(
         topBar = {
@@ -92,7 +149,7 @@ fun BatchEntryScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
                         )
                     }
@@ -131,8 +188,68 @@ fun BatchEntryScreen(
         }
     ) { pad ->
         Column(Modifier.fillMaxSize().padding(pad)) {
-            // Summary Card
+            // Editable Batch Details
             Card(Modifier.fillMaxWidth().padding(16.dp)) {
+                Column(Modifier.padding(16.dp)) {
+                    Text("Batch Details", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp))
+                    
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // Date Picker
+                        OutlinedTextField(
+                            value = dateFormat.format(Date(batchDate)),
+                            onValueChange = {},
+                            label = { Text("Date") },
+                            readOnly = true,
+                            trailingIcon = {
+                                IconButton(onClick = { if (!isBatchClosed) datePickerDialog.show() }) {
+                                    Icon(Icons.Default.DateRange, contentDescription = "Select Date")
+                                }
+                            },
+                            modifier = Modifier.weight(1f).clickable { if (!isBatchClosed) datePickerDialog.show() },
+                            enabled = !isBatchClosed
+                        )
+
+                        // Fund Dropdown
+                        ExposedDropdownMenuBox(
+                            expanded = fundDropdownExpanded,
+                            onExpandedChange = { if (!isBatchClosed) fundDropdownExpanded = !fundDropdownExpanded },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            val selectedFundName = funds.find { it.fundId == selectedFundId }?.name ?: ""
+                            OutlinedTextField(
+                                value = selectedFundName,
+                                onValueChange = {},
+                                label = { Text("Fund") },
+                                readOnly = true,
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = fundDropdownExpanded) },
+                                modifier = Modifier.menuAnchor(),
+                                enabled = !isBatchClosed
+                            )
+                            ExposedDropdownMenu(
+                                expanded = fundDropdownExpanded,
+                                onDismissRequest = { fundDropdownExpanded = false }
+                            ) {
+                                funds.forEach { f ->
+                                    DropdownMenuItem(
+                                        text = { Text(f.name) },
+                                        onClick = {
+                                            selectedFundId = f.fundId
+                                            fundDropdownExpanded = false
+                                            // Update batch fund immediately
+                                            if (f.fundId != null) {
+                                                vm.updateBatchDetails(batchId, batchDate, f.fundId)
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Summary Card
+            Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
                 Row(
                     Modifier.padding(16.dp).fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceAround
@@ -145,17 +262,13 @@ fun BatchEntryScreen(
                         Text("Total", style = MaterialTheme.typography.bodySmall)
                         Text(totalAmountText, style = MaterialTheme.typography.headlineMedium)
                     }
-                    fund?.let {
-                        Column {
-                            Text("Fund", style = MaterialTheme.typography.bodySmall)
-                            Text(it.name, style = MaterialTheme.typography.headlineMedium)
-                        }
-                    }
                     if (isBatchClosed) {
                         Text("Closed", style = MaterialTheme.typography.headlineMedium)
                     }
                 }
             }
+
+             Spacer(modifier = Modifier.height(16.dp))
 
             // Deposit Slip and Close Batch Buttons
             Row(
@@ -189,16 +302,22 @@ fun BatchEntryScreen(
                         "Check #${donationWithDonor.donation.checkNumber} - $${"%.2f".format(donationWithDonor.donation.checkAmount)}"
                     }
 
-                    Card(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                            .then(
+                                if (!isBatchClosed) {
+                                    Modifier.clickable { showEditDonationDialog = donationWithDonor.donation.toDomain() }
+                                } else Modifier
+                            )
+                    ) {
                         Row(Modifier.padding(16.dp)) {
                             Column(Modifier.weight(1f)) {
                                 Text(donorName, style = MaterialTheme.typography.titleMedium)
                                 Text(donationText)
                             }
                             if (!isBatchClosed) {
-                                IconButton(onClick = { showEditDonationDialog = donationWithDonor.donation.toDomain() }) {
-                                    Icon(Icons.Default.Edit, contentDescription = "Edit Donation")
-                                }
                                 IconButton(onClick = { showDeleteDonationDialog = donationWithDonor.donation.toDomain() }) {
                                     Icon(Icons.Default.Delete, contentDescription = "Delete Donation")
                                 }
@@ -213,32 +332,38 @@ fun BatchEntryScreen(
     if (showAddDonationDialog) {
         DonationEntryDialog(
             scannedData = state.scannedData,
+            donors = state.donors,
             batchId = batchId,
+            matchedDonor = matchedDonor,
             onDismiss = {
                 showAddDonationDialog = false
                 vm.clearScannedData()
             },
-            onSave = { fn, ln, cn, amt, dt, img ->
-                vm.addDonation(fn, ln, cn, amt, dt, img, batchId)
+            onSave = { fn, ln, cn, amt, dt, img, donorId ->
+                vm.addDonation(fn, ln, cn, amt, dt, img, batchId, donorId)
                 showAddDonationDialog = false
                 vm.clearScannedData()
-            }
+            },
+            onAddAlias = vm::addAlias
         )
     }
 
     showEditDonationDialog?.let { existingDonation ->
         DonationEntryDialog(
             donation = existingDonation,
+            donors = state.donors,
             batchId = batchId,
             onDismiss = { showEditDonationDialog = null },
-            onSave = { _, _, updatedCheckNumber, updatedAmount, _, _ ->
+            onSave = { _, _, updatedCheckNumber, updatedAmount, _, _, newDonorId ->
                 val updatedDonation = existingDonation.copy(
                     checkNumber = updatedCheckNumber,
-                    checkAmount = updatedAmount
+                    checkAmount = updatedAmount,
+                    donorId = newDonorId ?: existingDonation.donorId
                 )
                 vm.updateDonation(updatedDonation)
                 showEditDonationDialog = null
-            }
+            },
+            onAddAlias = vm::addAlias
         )
     }
 
@@ -286,7 +411,8 @@ fun BatchEntryScreen(
                     showDepositSlip = false
                     showCloseConfirmation = true
                 } catch (e: Exception) {
-                    // Handle error
+                    Log.e("BatchEntryScreen", "Error printing deposit slip", e)
+                    Toast.makeText(context, "Error printing: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         )
@@ -346,89 +472,229 @@ fun DepositSlipDialog(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DonationEntryDialog(
     scannedData: ScannedCheckData? = null,
     donation: Donation? = null,
+    donors: List<Donor>,
     batchId: Long,
+    matchedDonor: Donor? = null,
     onDismiss: () -> Unit,
-    onSave: (firstName: String, lastName: String, checkNumber: String, amount: Double, date: Long, image: String?) -> Unit
+    onSave: (firstName: String, lastName: String, checkNumber: String, amount: Double, date: Long, image: String?, donorId: Long?) -> Unit,
+    onAddAlias: (donorId: Long, firstName: String, lastName: String) -> Unit
 ) {
-    var firstName by remember { mutableStateOf(scannedData?.firstName ?: "") }
-    var lastName by remember { mutableStateOf(scannedData?.lastName ?: "") }
+    val existingDonor = remember(donation, donors) {
+        if (donation != null) {
+            donors.find { it.donorId == donation.donorId }
+        } else null
+    }
+
+    var firstName by remember { mutableStateOf(existingDonor?.firstName ?: matchedDonor?.firstName ?: scannedData?.firstName ?: "") }
+    var lastName by remember { mutableStateOf(existingDonor?.lastName ?: matchedDonor?.lastName ?: scannedData?.lastName ?: "") }
     var checkNumber by remember { mutableStateOf(donation?.checkNumber ?: scannedData?.checkNumber ?: "") }
     var amount by remember { mutableStateOf(donation?.checkAmount?.toString() ?: scannedData?.amount ?: "") }
     var isCash by remember { mutableStateOf(donation?.checkNumber == "Cash") }
+    
+    var selectedAliasDonor by remember(existingDonor, matchedDonor) { 
+        mutableStateOf<Donor?>(existingDonor ?: matchedDonor) 
+    }
+    var aliasDropdownExpanded by remember { mutableStateOf(false) }
+    
+    val amountFocusRequester = remember { FocusRequester() }
+    val context = LocalContext.current
 
-    val dialogTextStyle = MaterialTheme.typography.bodyLarge.copy(fontSize = MaterialTheme.typography.bodyLarge.fontSize * 1.7f)
+    val sortedDonors = remember(donors) { donors.sortedBy { it.lastName } }
+
+    LaunchedEffect(Unit) {
+        amountFocusRequester.requestFocus()
+    }
+
+    val checkImage = donation?.checkImage ?: scannedData?.imageData
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var showFullScreenImage by remember { mutableStateOf(false) }
+
+    LaunchedEffect(checkImage) {
+        if (!checkImage.isNullOrEmpty()) {
+            try {
+                bitmap = base64ToBitmap(checkImage)
+            } catch (e: Exception) {
+                Log.e("BatchEntryScreen", "Error decoding check image", e)
+            }
+        }
+    }
+
+    if (showFullScreenImage && bitmap != null) {
+        FullScreenImageDialog(bitmap = bitmap!!, onDismiss = { showFullScreenImage = false })
+        return
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (donation == null) "Add Donation" else "Edit Donation") },
         text = {
-            Column {
-                if (donation == null) {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     OutlinedTextField(
                         value = firstName,
                         onValueChange = { firstName = it },
                         label = { Text("First Name") },
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
-                        textStyle = dialogTextStyle,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.weight(1f)
                     )
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = lastName,
-                        onValueChange = { lastName = it },
-                        label = { Text("Last Name") },
-                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
-                        textStyle = dialogTextStyle,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    ExposedDropdownMenuBox(
+                        expanded = aliasDropdownExpanded,
+                        onExpandedChange = { aliasDropdownExpanded = !aliasDropdownExpanded },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        OutlinedTextField(
+                            value = selectedAliasDonor?.let { "${it.firstName} ${it.lastName}" } ?: "No alias",
+                            onValueChange = {},
+                            readOnly = true,
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = aliasDropdownExpanded) },
+                            modifier = Modifier.menuAnchor()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = aliasDropdownExpanded,
+                            onDismissRequest = { aliasDropdownExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("No alias") },
+                                onClick = {
+                                    selectedAliasDonor = null
+                                    aliasDropdownExpanded = false
+                                }
+                            )
+                            sortedDonors.forEach { donor ->
+                                DropdownMenuItem(
+                                    text = { Text("${donor.firstName} ${donor.lastName}") },
+                                    onClick = {
+                                        selectedAliasDonor = donor
+                                        firstName = donor.firstName
+                                        lastName = donor.lastName
+                                        aliasDropdownExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
                 }
-
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = lastName,
+                    onValueChange = { lastName = it },
+                    label = { Text("Last Name") },
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(16.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Checkbox(checked = isCash, onCheckedChange = { isCash = it })
-                    Text("Cash", style = dialogTextStyle, modifier = Modifier.padding(end = 16.dp))
-
+                    Text("Cash", modifier = Modifier.padding(end = 16.dp))
                     OutlinedTextField(
                         value = if (isCash) "Cash" else checkNumber,
                         onValueChange = { if (!isCash) checkNumber = it },
                         label = { Text("Check Number") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         enabled = !isCash,
-                        textStyle = dialogTextStyle,
                         modifier = Modifier.weight(1f)
                     )
                 }
-
                 Spacer(Modifier.height(8.dp))
-
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it },
                     label = { Text("Amount") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    textStyle = dialogTextStyle,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().focusRequester(amountFocusRequester)
                 )
+                Spacer(Modifier.height(16.dp))
+                if (bitmap != null) {
+                    Image(
+                        bitmap = bitmap!!.asImageBitmap(),
+                        contentDescription = "Check Image",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .clickable { showFullScreenImage = true },
+                        contentScale = ContentScale.Fit
+                    )
+                }
             }
         },
         confirmButton = {
-            Button(
-                enabled = (donation != null || (firstName.isNotBlank() && lastName.isNotBlank())) &&
-                        (isCash || checkNumber.isNotBlank()) && amount.toDoubleOrNull() != null && batchId > 0L,
-                onClick = {
-                    amount.toDoubleOrNull()?.let { amt ->
-                        onSave(firstName, lastName, if (isCash) "Cash" else checkNumber, amt, System.currentTimeMillis(), scannedData?.imageData)
-                    }
+             Row {
+                Button(
+                    onClick = {
+                        selectedAliasDonor?.let { 
+                            onAddAlias(it.donorId, firstName, lastName)
+                            Toast.makeText(context, "Alias created", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    enabled = selectedAliasDonor != null
+                ) {
+                    Text("Alias")
                 }
-            ) { Text("Save") }
+                Spacer(Modifier.width(8.dp))
+                Button(
+                    enabled = (donation != null || (firstName.isNotBlank() && lastName.isNotBlank())) &&
+                            (isCash || checkNumber.isNotBlank()) && amount.toDoubleOrNull() != null && batchId > 0L,
+                    onClick = {
+                        amount.toDoubleOrNull()?.let { amt ->
+                            onSave(firstName, lastName, if (isCash) "Cash" else checkNumber, amt, System.currentTimeMillis(), scannedData?.imageData, selectedAliasDonor?.donorId)
+                        }
+                    }
+                ) { Text("Save") }
+            }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
+}
+
+@Composable
+fun FullScreenImageDialog(bitmap: Bitmap, onDismiss: () -> Unit) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(modifier = Modifier.fillMaxSize()) {
+            var scale by remember { mutableStateOf(1f) }
+            var offset by remember { mutableStateOf(Offset.Zero) }
+            val transformState = rememberTransformableState { zoomChange, panChange, _ ->
+                scale = (scale * zoomChange).coerceIn(1f, 5f)
+                offset += panChange
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .transformable(state = transformState)
+            ) {
+                Image(
+                    bitmap = bitmap.asImageBitmap(),
+                    contentDescription = "Full screen check image",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            scaleX = scale
+                            scaleY = scale
+                            translationX = offset.x
+                            translationY = offset.y
+                        },
+                    contentScale = ContentScale.Fit
+                )
+            }
+
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier.padding(8.dp)
+            ) {
+                Icon(Icons.Default.Close, contentDescription = "Close full screen image")
+            }
+        }
+    }
 }

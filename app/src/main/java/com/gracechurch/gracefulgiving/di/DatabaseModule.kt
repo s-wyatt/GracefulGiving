@@ -64,6 +64,7 @@ object DatabaseModule {
                     }
                 }
             })
+            // CAUTION: destructive migration is enabled. Ensure autoMigrations are sufficient to avoid data loss.
             .fallbackToDestructiveMigration()
             .build()
     }
@@ -102,5 +103,11 @@ object DatabaseModule {
     @Singleton
     fun provideFundDao(database: GracefulGivingDatabase): FundDao {
         return database.fundDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideAliasDao(database: GracefulGivingDatabase): AliasDao {
+        return database.aliasDao()
     }
 }

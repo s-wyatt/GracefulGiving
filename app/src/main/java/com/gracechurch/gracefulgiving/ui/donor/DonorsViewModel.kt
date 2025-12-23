@@ -2,7 +2,7 @@ package com.gracechurch.gracefulgiving.ui.donor
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.gracechurch.gracefulgiving.domain.model.Donation
+import com.gracechurch.gracefulgiving.domain.model.DonationListItem
 import com.gracechurch.gracefulgiving.domain.model.Donor
 import com.gracechurch.gracefulgiving.domain.repository.DonationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,12 +26,12 @@ class DonorsDonationsViewModel @Inject constructor(
 
     private fun load() = viewModelScope.launch {
         val donors = donorRepository.getAllDonors()
-        val donations = donationRepository.getAllDonations().first() // Collect the Flow
+        val donations = donationRepository.getAllDonations().first()
         _uiState.value = DonorsDonationsUiState(donors, donations)
     }
 }
 
 data class DonorsDonationsUiState(
     val donors: List<Donor> = emptyList(),
-    val donations: List<Donation> = emptyList()
+    val donations: List<DonationListItem> = emptyList()
 )

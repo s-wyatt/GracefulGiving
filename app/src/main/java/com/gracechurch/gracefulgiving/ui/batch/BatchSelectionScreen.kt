@@ -1,5 +1,6 @@
 package com.gracechurch.gracefulgiving.ui.batch
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -42,7 +43,6 @@ fun BatchSelectionScreen(
     var batchDate by remember { mutableStateOf(Date()) }
     var dateText by remember { mutableStateOf(dateFormat.format(batchDate)) }
 
-    // Scale factor for all text
     val textScale = 1.2f
 
     LaunchedEffect(Unit) {
@@ -128,7 +128,9 @@ fun BatchSelectionScreen(
                         val dateStr = displayDateFormat.format(Date(batch.createdOn))
 
                         Card(
-                            Modifier.fillMaxWidth()
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable { onNavigateToBatchEntry(batch.batchId) }
                         ) {
                             Column(Modifier.padding(16.dp)) {
                                 Row(
@@ -159,12 +161,6 @@ fun BatchSelectionScreen(
                                     }
 
                                     Row {
-                                        IconButton(
-                                            onClick = { onNavigateToBatchEntry(batch.batchId) }
-                                        ) {
-                                            Icon(Icons.Default.Edit, "Continue")
-                                        }
-
                                         IconButton(
                                             onClick = { vm.printBatchReport(batch.batchId) }
                                         ) {

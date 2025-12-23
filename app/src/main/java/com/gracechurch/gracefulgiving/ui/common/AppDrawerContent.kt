@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.Person
@@ -91,6 +92,16 @@ fun AppDrawerContent(navController: NavController, closeDrawer: () -> Unit) {
         selected = false,
         onClick = {
             navController.navigate(Routes.IMPORT_DONATIONS)
+            closeDrawer()
+        }
+    )
+
+    NavigationDrawerItem(
+        label = { Text("Export", style = itemTextStyle) },
+        icon = { Icon(Icons.Default.Download, contentDescription = "Export") },
+        selected = false,
+        onClick = {
+            navController.navigate(Routes.EXPORT_DONATIONS)
             closeDrawer()
         }
     )

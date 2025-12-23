@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Update
 import com.gracechurch.gracefulgiving.data.local.entity.BatchEntity
 import com.gracechurch.gracefulgiving.data.local.relations.BatchWithDonations
 import kotlinx.coroutines.flow.Flow
@@ -17,6 +18,9 @@ interface BatchDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBatch(batch: BatchEntity): Long
+
+    @Update
+    suspend fun updateBatch(batch: BatchEntity)
 
     @Transaction
     @Query("SELECT * FROM batches WHERE batchId = :id")

@@ -5,6 +5,7 @@ import com.gracechurch.gracefulgiving.data.local.dao.FundDao
 import com.gracechurch.gracefulgiving.data.local.entity.BatchEntity
 import com.gracechurch.gracefulgiving.data.local.relations.BatchWithDonations
 import com.gracechurch.gracefulgiving.data.mappers.toDomain
+import com.gracechurch.gracefulgiving.domain.model.Batch
 import com.gracechurch.gracefulgiving.domain.model.BatchInfo
 import com.gracechurch.gracefulgiving.domain.model.Donation
 import com.gracechurch.gracefulgiving.domain.repository.BatchRepository
@@ -49,7 +50,19 @@ class BatchRepositoryImpl @Inject constructor(
         dao.updateBatchStatus(batchId, "closed")
     }
 
-    // Delegate the addDonation call to the DonationRepository
+    override suspend fun updateBatch(batch: Batch) {
+        dao.updateBatch(
+            BatchEntity(
+                batchId = batch.batchId,
+                batchNumber = batch.batchNumber.toLongOrNull() ?: 0L,
+                userId = batch.createdBy,
+                createdOn = batch.batchDate,
+                status = batch.status,
+                fundId = batch.fundId
+            )
+        )
+    }
+
     override suspend fun addDonation(
         firstName: String,
         lastName: String,
@@ -58,9 +71,10 @@ class BatchRepositoryImpl @Inject constructor(
         date: Long,
         image: String?,
         batchId: Long,
-        fundId: Long
+        fundId: Long,
+        donorId: Long?
     ) {
-        donationRepo.addDonation(firstName, lastName, checkNumber, amount, date, image, batchId, fundId)
+        donationRepo.addDonation(firstName, lastName, checkNumber, amount, date, image, batchId, fundId, donorId)
     }
 
     override suspend fun deleteDonation(donationId: Long) {
@@ -73,7 +87,6 @@ class BatchRepositoryImpl @Inject constructor(
 
     override suspend fun getOpenBatches(): List<BatchInfo> = coroutineScope {
         val batchesWithDonations = dao.getAllBatchesWithDonations().first()
-        // Filter for open batches if needed (assuming "open" is status)
         val openBatches = batchesWithDonations.filter { it.batch.status == "open" }
         
         openBatches.map { batchWithDonations ->

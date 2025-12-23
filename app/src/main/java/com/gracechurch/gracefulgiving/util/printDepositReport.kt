@@ -31,8 +31,8 @@ fun printDepositReport(
     }
 
     // Separate checks and cash donations
-    val checkDonations = donations.filter { it.donation.checkNumber.isNotEmpty() }
-    val cashDonations = donations.filter { it.donation.checkNumber.isEmpty() }
+    val checkDonations = donations.filter { it.donation.checkNumber.isNotEmpty() && it.donation.checkNumber != "Cash" }
+    val cashDonations = donations.filter { it.donation.checkNumber.isEmpty() || it.donation.checkNumber == "Cash" }
 
     // Create PDF document
     val pdfDocument = PdfDocument()
@@ -80,20 +80,20 @@ fun printDepositReport(
 
     // 2. Bank and Account Info
     // Bank Name
-    canvas.drawText(":", leftMargin, yPosition, headerPaint)
-    canvas.drawText(fund.bankName, leftMargin + 150f, yPosition, normalPaint)
+    canvas.drawText("Bank:", leftMargin, yPosition, headerPaint)
+    canvas.drawText(fund.bankName, leftMargin + 100f, yPosition, normalPaint)
     yPosition += 20f
     // Account Name
-    canvas.drawText(":", leftMargin, yPosition, headerPaint)
-    canvas.drawText(fund.accountName, leftMargin + 150f, yPosition, normalPaint)
+    canvas.drawText("Account:", leftMargin, yPosition, headerPaint)
+    canvas.drawText(fund.accountName, leftMargin + 100f, yPosition, normalPaint)
     yPosition += 20f
     // Account Number
-    canvas.drawText(":", leftMargin, yPosition, headerPaint)
-    canvas.drawText(fund.accountNumber, leftMargin + 150f, yPosition, normalPaint)
+    canvas.drawText("Acc #:", leftMargin, yPosition, headerPaint)
+    canvas.drawText(fund.accountNumber, leftMargin + 100f, yPosition, normalPaint)
     yPosition += 20f
     // Batch Date
-    canvas.drawText(":", leftMargin, yPosition, headerPaint)
-    canvas.drawText(dateFormat.format(Date(batchDate)), leftMargin + 150f, yPosition, normalPaint)
+    canvas.drawText("Date:", leftMargin, yPosition, headerPaint)
+    canvas.drawText(dateFormat.format(Date(batchDate)), leftMargin + 100f, yPosition, normalPaint)
     yPosition += 40f
 
     // 3. CHECKS Section
