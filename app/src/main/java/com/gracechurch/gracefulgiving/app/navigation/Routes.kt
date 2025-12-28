@@ -21,4 +21,5 @@ object Routes {
     const val DONATION = "donation"
     const val IMPORT_DONATIONS = "import_donations"
     const val EXPORT_DONATIONS = "export_donations"
+    const val BACKUP_DATABASE = "backup_database"
 }

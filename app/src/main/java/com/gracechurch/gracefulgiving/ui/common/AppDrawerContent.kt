@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Download
@@ -102,6 +103,16 @@ fun AppDrawerContent(navController: NavController, closeDrawer: () -> Unit) {
         selected = false,
         onClick = {
             navController.navigate(Routes.EXPORT_DONATIONS)
+            closeDrawer()
+        }
+    )
+
+    NavigationDrawerItem(
+        label = { Text("Backup", style = itemTextStyle) },
+        icon = { Icon(Icons.Default.Backup, contentDescription = "Backup") },
+        selected = false,
+        onClick = {
+            navController.navigate(Routes.BACKUP_DATABASE)
             closeDrawer()
         }
     )

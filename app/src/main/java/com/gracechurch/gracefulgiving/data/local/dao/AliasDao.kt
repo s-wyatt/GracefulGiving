@@ -17,7 +17,10 @@ interface AliasDao {
 
     @Query("SELECT * FROM aliases WHERE firstName = :firstName AND lastName = :lastName LIMIT 1")
     suspend fun findAliasByName(firstName: String, lastName: String): AliasEntity?
-    
+
     @Query("SELECT * FROM aliases WHERE lastName LIKE :lastName")
     suspend fun findAliasesByLastName(lastName: String): List<AliasEntity>
+
+    @Query("SELECT * FROM aliases ORDER BY aliasId")
+    suspend fun getAllAliases(): List<AliasEntity>
 }

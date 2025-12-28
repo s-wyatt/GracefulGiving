@@ -21,4 +21,7 @@ interface FundDao {
 
     @Query("SELECT * FROM funds WHERE fundId = :fundId")
     suspend fun getFund(fundId: Long): FundEntity?
+
+    @Query("SELECT * FROM funds ORDER BY fundId")
+    suspend fun getAllFunds(): List<FundEntity>
 }

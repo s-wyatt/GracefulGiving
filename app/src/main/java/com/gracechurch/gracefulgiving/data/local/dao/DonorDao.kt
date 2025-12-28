@@ -30,4 +30,7 @@ interface DonorDao {
 
     @Query("SELECT * FROM donors WHERE firstName = :firstName AND lastName = :lastName LIMIT 1")
     suspend fun findDonorByName(firstName: String, lastName: String): DonorEntity?
+
+    @Query("SELECT * FROM donors ORDER BY donorId")
+    suspend fun getAllDonors(): List<DonorEntity>
 }

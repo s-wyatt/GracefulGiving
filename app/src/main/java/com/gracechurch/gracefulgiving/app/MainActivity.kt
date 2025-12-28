@@ -10,8 +10,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.gracechurch.gracefulgiving.app.navigation.Routes
 import com.gracechurch.gracefulgiving.domain.repository.UserSessionRepository
+import com.gracechurch.gracefulgiving.domain.usecase.BackupDatabaseUseCase
 import com.gracechurch.gracefulgiving.domain.usecase.ExportDonationsUseCase
 import com.gracechurch.gracefulgiving.domain.usecase.ImportDonationsUseCase
+import com.gracechurch.gracefulgiving.ui.backup.BackupScreen
 import com.gracechurch.gracefulgiving.ui.batch.BatchEntryScreen
 import com.gracechurch.gracefulgiving.ui.batch.BatchManagementScreen
 import com.gracechurch.gracefulgiving.ui.batch.BatchSelectionScreen
@@ -40,6 +42,7 @@ class MainActivity : ComponentActivity() {
     @Inject lateinit var userSessionRepository: UserSessionRepository
     @Inject lateinit var importDonationsUseCase: ImportDonationsUseCase
     @Inject lateinit var exportDonationsUseCase: ExportDonationsUseCase
+    @Inject lateinit var backupDatabaseUseCase: BackupDatabaseUseCase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,6 +87,15 @@ class MainActivity : ComponentActivity() {
                             ExportDonationsScreen(
                                 onNavigateUp = { navController.popBackStack() },
                                 exportDonationsUseCase = exportDonationsUseCase
+                            )
+                        }
+                    }
+
+                    composable(Routes.BACKUP_DATABASE) {
+                        MainScaffold(navController) {
+                            BackupScreen(
+                                onNavigateUp = { navController.popBackStack() },
+                                backupDatabaseUseCase = backupDatabaseUseCase
                             )
                         }
                     }

@@ -1,4 +1,5 @@
 package com.gracechurch.gracefulgiving.data.local.dao
+
 import androidx.room.*
 import com.gracechurch.gracefulgiving.data.local.entity.CheckImageEntity
 import kotlinx.coroutines.flow.Flow
@@ -16,4 +17,7 @@ interface CheckImageDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCheckImage(image: CheckImageEntity): Long
+
+    @Query("SELECT * FROM check_images ORDER BY checkImageId")
+    suspend fun getAllCheckImages(): List<CheckImageEntity>
 }

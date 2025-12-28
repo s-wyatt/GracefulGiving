@@ -63,4 +63,7 @@ interface DonationDao {
     ORDER BY d.checkDate DESC, don.lastName ASC, don.firstName ASC
 """)
     suspend fun getAllDonationsWithDetails(): List<DonationExportData>
+
+    @Query("SELECT * FROM donations ORDER BY donationId")
+    suspend fun getAllDonationsList(): List<DonationEntity>
 }

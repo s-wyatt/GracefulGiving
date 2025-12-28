@@ -38,4 +38,7 @@ interface BatchDao {
 
     @Query("UPDATE batches SET status = :status WHERE batchId = :batchId")
     suspend fun updateBatchStatus(batchId: Long, status: String)
+
+    @Query("SELECT * FROM batches ORDER BY batchId")
+    suspend fun getAllBatchesList(): List<BatchEntity>
 }

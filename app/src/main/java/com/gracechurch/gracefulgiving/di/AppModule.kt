@@ -2,6 +2,8 @@ package com.gracechurch.gracefulgiving.di
 
 import com.gracechurch.gracefulgiving.data.repository.UserSessionRepositoryImpl
 import com.gracechurch.gracefulgiving.domain.repository.UserSessionRepository
+import com.gracechurch.gracefulgiving.domain.usecase.BackupDatabaseUseCase
+import com.gracechurch.gracefulgiving.domain.usecase.BackupDatabaseUseCaseImpl
 import com.gracechurch.gracefulgiving.domain.usecase.ExportDonationsUseCase
 import com.gracechurch.gracefulgiving.domain.usecase.ExportDonationsUseCaseImpl
 import com.gracechurch.gracefulgiving.domain.usecase.ImportDonationsUseCase
@@ -20,8 +22,14 @@ abstract class AppModule {
     abstract fun bindImportDonationsUseCase(
         impl: ImportDonationsUseCaseImpl
     ): ImportDonationsUseCase
+
     @Binds
     abstract fun bindExportDonationsUseCase(
         impl: ExportDonationsUseCaseImpl
     ): ExportDonationsUseCase
+
+    @Binds
+    abstract fun bindBackupDatabaseUseCase(
+        impl: BackupDatabaseUseCaseImpl
+    ): BackupDatabaseUseCase
 }
